@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="green">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CourseFlix</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* --- THEME & ACCENT COLOR VARIABLES --- */
+        :root {
+            --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
+            --text-primary: #1f2937; --text-secondary: #6b7280; --text-on-accent: #ffffff;
+            --border-primary: #e5e7eb; --border-secondary: #d1d5db; --accent-danger: #ef4444;
+            --status-review: #f59e0b; --status-practice: #3b82f6;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        html[data-theme="dark"] {
+            --bg-primary: #000000; --bg-secondary: #121212; --bg-tertiary: #1E1E1E;
+            --text-primary: #f5f5f5; --text-secondary: #a3a3a3;
+            --border-primary: #27272a; --border-secondary: #3f3f46;
+            --shadow: 0 1px 3px 0 rgb(255 255 255 / 0.1), 0 1px 2px -1px rgb(255 255 255 / 0.08);
+        }
+        html[data-accent="green"] {
+            --accent-primary: #16a34a; --accent-hover: #15803d;
+            --accent-primary_translucent: rgba(34, 197, 94, 0.4);
+        }
+
+        /* --- BASE STYLES --- */
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            transition: background-color 0.2s, color 0.2s; margin: 0;
+            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
+        button, a, input { font-family: inherit; -webkit-tap-highlight-color: transparent; }
+
+        /* --- VIEWS & LAYOUT --- */
+        .view { width: 100%; flex-grow: 1; display: none; flex-direction: column; overflow: hidden; }
+        .view.active { display: flex; }
+        
+        /* --- NAVBAR --- */
+        nav {
+            display: flex; align-items: center; padding: 1rem 2.5rem;
+            background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); 
+            flex-shrink: 0; z-index: 10; gap: 2rem;
+        }
+        nav h1 { margin: 0; font-size: 1.5rem; font-weight: 700; cursor: pointer; }
+        .nav-links { margin-right: auto; display: flex; gap: 1rem; }
+        .nav-link { 
+            color: var(--text-secondary); text-decoration: none; font-weight: 600; font-size: 0.95rem;
+            padding: 8px 12px; border-radius: 8px; transition: background-color 0.2s, color 0.2s;
+        }
+        .nav-link:hover { color: var(--text-primary); background-color: var(--bg-tertiary); }
+        .nav-link.active { color: var(--accent-primary); }
+        .primary-btn {
+            background-color: var(--accent-primary); color: var(--text-on-accent); border: none;
+            padding: 10px 18px; border-radius: 8px; font-size: 1rem; font-weight: 600; cursor: pointer;
+            transition: background-color 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .primary-btn:hover { background-color: var(--accent-hover); }
+
+        /* --- DASHBOARD, REVIEW, PRACTICE GRIDS --- */
+        .grid-container { overflow-y: auto; flex-grow: 1; padding: 24px; }
+        #course-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 24px;
+        }
+        #review-grid, #practice-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        #review-grid.list-layout, #practice-grid.list-layout {
+            display: flex;
+            flex-direction: column;
+        }
+
+
+        /* --- Course Card (Dashboard) --- */
+        .course-card {
+            background-color: var(--bg-secondary); border-radius: 10px;
+            box-shadow: var(--shadow); border: 1px solid var(--border-primary);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; 
+            display: flex; flex-direction: column; height: 320px;
+            overflow: hidden;
+        }
+        html[data-theme="dark"] .course-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -2px var(--accent-primary_translucent); transform: translateY(-2px); }
+        html[data-theme="light"] .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .thumbnail-placeholder {
+            width: 100%; height: 140px; background-color: var(--bg-tertiary); border-bottom: 1px solid var(--border-primary);
+            display: flex; align-items: center; justify-content: center; position: relative;
+            flex-shrink: 0; cursor: pointer; background-size: cover; background-position: center;
+        }
+        .thumbnail-placeholder i { font-size: 2.5rem; color: var(--text-secondary); opacity: 0.4; }
+        .thumbnail-placeholder.has-thumbnail i { display: none; }
+        .remove-course-btn, .remove-thumbnail-btn {
+            position: absolute; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px;
+            cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 2;
+        }
+        .remove-course-btn { top: 8px; right: 8px; }
+        .remove-thumbnail-btn { top: 8px; left: 8px; display: none; }
+        .remove-course-btn:hover, .remove-thumbnail-btn:hover { background: var(--accent-danger); }
+        .course-card:hover .remove-course-btn { opacity: 1; }
+        .course-card:hover .thumbnail-placeholder.has-thumbnail .remove-thumbnail-btn { opacity: 1; display: flex; }
+        .course-info { padding: 12px 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .course-info h3 { margin: 0 0 4px 0; font-size: 1rem; line-height: 1.3; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .course-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px 0; }
+        .course-duration { font-size: 0.75rem; color: var(--accent-primary); margin-bottom: 8px; font-weight: 500; }
+        .course-progress-container { margin-top: auto; }
+        .course-progress-bar, .lecture-progress-bar, .menu-progress-bar { width: 100%; height: 6px; background-color: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-bottom: 4px;}
+        .course-progress-fill, .lecture-progress-fill, .menu-progress-fill { height: 100%; background-color: var(--accent-primary); transition: width 0.3s ease; }
+        .course-progress-text, .menu-progress-text { font-size: 0.75rem; color: var(--text-secondary); }
+        .enter-course-btn { padding: 8px 12px; width: 100%; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; text-decoration: none; display: block; text-align: center; background-color: var(--accent-primary); color: var(--text-on-accent); margin-top: 12px; }
+        .enter-course-btn:hover { background-color: var(--accent-hover); }
+
+        /* --- Lecture Card (Review/Practice) --- */
+        .lecture-review-card { background-color: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-primary); padding: 16px; display: flex; flex-direction: column; justify-content: space-between; }
+        .lecture-review-info { flex-grow: 1; }
+        .lecture-review-info h3 { margin: 0 0 4px 0; font-size: 1rem; font-weight: 600; }
+        .lecture-review-info .course-title { font-size: 0.8rem; font-weight: 500; color: var(--accent-primary); margin-bottom: 12px; }
+        .lecture-review-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px; }
+        .lecture-review-card .primary-btn { margin-top: 12px; }
+
+        /* --- View Header (Filters) --- */
+        .view-header { padding: 12px 24px; border-bottom: 1px solid var(--border-primary); display: flex; align-items: center; gap: 1rem; position: relative; }
+        .filter-dropdown { position: absolute; top: 100%; left: 24px; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; box-shadow: var(--shadow); z-index: 20; max-height: 300px; overflow-y: auto; }
+        .filter-dropdown a { display: block; padding: 10px 15px; text-decoration: none; color: var(--text-primary); cursor: pointer; }
+        .filter-dropdown a:hover { background-color: var(--bg-tertiary); }
+
+        /* --- ADD COURSE MODAL --- */
+        #modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
+        #modal-overlay.hidden { display: none !important; }
+        .modal-content { background-color: var(--bg-secondary); border-radius: 1rem; padding: 2rem; width: 100%; max-width: 450px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 1.5rem; position: relative; }
+        #close-modal-btn { position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; color: var(--text-secondary); cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 50%; transition: background-color 0.2s; }
+        .modal-content h2 { margin: 0; }
+        .secondary-btn { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-secondary); background-color: var(--bg-tertiary); color: var(--text-primary); font-size: 1rem; font-weight: 500; cursor: pointer; }
+        
+        /* --- PLAYER VIEW --- */
+        #player-view { flex-direction: row; }
+        #lecture-menu { width:380px; background-color:var(--bg-secondary); border-right:1px solid var(--border-primary); flex-shrink:0; display:flex; flex-direction:column; transition:margin-left 0.3s ease; }
+        #lecture-menu.hidden { margin-left:-380px; }
+        .menu-header { padding:20px; border-bottom:1px solid var(--border-primary); background-color: var(--bg-primary); flex-shrink: 0; }
+        .back-link { color:var(--accent-primary);text-decoration:none;display:block;margin-bottom:15px;font-weight:500; cursor: pointer;}
+        #chapter-list { overflow-y:auto; flex-grow:1; padding:10px; }
+        .chapter-title { font-weight:bold; cursor:pointer; padding:12px; border-radius:8px; display:flex; align-items:center; gap:8px; transition: background-color 0.2s; }
+        .chapter-title:hover { background-color: var(--bg-tertiary); }
+        .chapter-title i { transition: transform 0.2s; }
+        .chapter.open > .chapter-title i { transform: rotate(90deg); }
+        .lecture-list { list-style:none; padding-left: 20px; margin: 0; display: none; }
+        .chapter.open > .lecture-list { display: block; }
+        .lecture-list li { padding:10px 12px; cursor:pointer; border-radius:8px; margin-top:5px; display:flex; align-items:center; gap:10px; }
+        .lecture-list li:hover { background-color:var(--bg-tertiary); }
+        .lecture-list li.active { background-color:var(--accent-primary);color:var(--text-on-accent); }
+        .lecture-checkbox { width: 18px; height: 18px; border: 2px solid var(--border-secondary); border-radius: 4px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+        .lecture-checkbox.completed { background-color: var(--accent-primary); border-color: var(--accent-primary); }
+        .lecture-checkbox i { color: white; font-size: 12px; opacity: 0; }
+        .lecture-checkbox.completed i { opacity: 1; }
+        .lecture-title { flex-grow: 1; transition: opacity 0.2s; }
+        .lecture-title.completed { text-decoration: line-through; opacity: 0.6; }
+        .lecture-duration { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; flex-shrink: 0; }
+        .status-btn { border: none; border-radius: 6px; font-size: 0.65rem; font-weight: 700; padding: 4px 8px; margin-left: 10px; cursor: pointer; flex-shrink: 0; background-color: var(--bg-tertiary); color: var(--text-secondary); }
+        .status-btn.review { background-color: var(--status-review); color: white; }
+        .status-btn.practice { background-color: var(--status-practice); color: white; }
+
+        /* --- Video Player & Controls --- */
+        #video-wrapper { flex-grow:1;background-color:black;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden;}
+        #video-player { width:100%;height:100%;outline:none;}
+        .seek-overlay{position:absolute;top:0;width:50%;height:100%;z-index:10;pointer-events:none;}
+        #left-seek-overlay{left:0;} #right-seek-overlay{right:0;}
+        .seek-overlay i{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:white;opacity:0;pointer-events:none;}
+        .seek-overlay.show-icon i{opacity:0.8;animation:fade-out 0.5s forwards;}
+        @keyframes fade-out { from { opacity: 0.8; } to { opacity: 0; } }
+        .video-controls-container { position:absolute;bottom:0;left:0;width:100%;padding:0 15px;z-index:20;opacity:0;transition:opacity 0.2s ease-in-out;background:linear-gradient(to top, rgba(0,0,0,0.7), transparent);}
+        #video-wrapper:hover .video-controls-container { opacity:1; }
+        .timeline { -webkit-appearance:none; appearance:none; background:rgba(255,255,255,0.3); cursor:pointer; height:8px; width:100%; border-radius:5px; transition: height 0.2s ease; }
+        .timeline:hover { height: 12px; }
+        .timeline::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; height:18px; width:18px; border-radius:50%; background-color:var(--accent-primary); border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: transform 0.2s ease; }
+        .timeline-container:hover .timeline::-webkit-slider-thumb { transform: scale(1.2); }
+        .controls { display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;color:white;}
+        .left-controls, .right-controls { display:flex;align-items:center;gap:15px; }
+        .control-btn { background:none;border:none;color:white;font-size:18px;cursor:pointer;padding:5px; }
+        
+        #sidebar-toggle-btn{ position:fixed;top:50%;left:380px;transform:translateY(-50%);z-index:1001;background:var(--accent-primary);color:white;border:none;width:25px;height:70px;border-radius:0 8px 8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left 0.3s ease; }
+        #sidebar-toggle-btn.collapsed { left:0; }
+        #sidebar-toggle-btn i { transition:transform 0.3s; }
+        #sidebar-toggle-btn.collapsed i { transform:rotate(180deg); }
+        #no-content-message { text-align: center; color: var(--text-secondary); padding: 50px; }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <h1 id="home-btn">CourseFlix</h1>
+        <div class="nav-links">
+            <a href="#" class="nav-link" data-view="dashboard-view">Dashboard</a>
+            <a href="#" class="nav-link" data-view="review-view">Review</a>
+            <a href="#" class="nav-link" data-view="practice-view">Practice</a>
+        </div>
+        <button id="add-course-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Course</button>
+    </nav>
+
+    <div id="dashboard-view" class="view active">
+        <main id="course-grid" class="grid-container"></main>
+    </div>
+
+    <div id="review-view" class="view">
+        <div class="view-header">
+            <button class="primary-btn" id="filter-btn-review"><i class="fas fa-filter"></i> Filter by Course</button>
+            <div id="filter-dropdown-review" class="filter-dropdown hidden"></div>
+        </div>
+        <main id="review-grid" class="grid-container"></main>
+    </div>
+
+    <div id="practice-view" class="view">
+        <div class="view-header">
+            <button class="primary-btn" id="filter-btn-practice"><i class="fas fa-filter"></i> Filter by Course</button>
+            <div id="filter-dropdown-practice" class="filter-dropdown hidden"></div>
+        </div>
+        <main id="practice-grid" class="grid-container"></main>
+    </div>
+
+    <div id="player-view" class="view">
+        <div id="lecture-menu">
+            <div class="menu-header">
+                <a class="back-link">&larr; Back to Courses</a>
+                <h2 id="course-title-menu"></h2>
+                <div class="course-stats"></div>
+                <div class="menu-progress-container">
+                    <div class="menu-progress-bar">
+                        <div class="menu-progress-fill"></div>
+                    </div>
+                    <div class="menu-progress-text"></div>
+                </div>
+            </div>
+            <div id="chapter-list"></div>
+        </div>
+        <div id="video-wrapper">
+            <video id="video-player"></video>
+            <div class="seek-overlay" id="left-seek-overlay"><i class="fas fa-backward"></i></div>
+            <div class="seek-overlay" id="right-seek-overlay"><i class="fas fa-forward"></i></div>
+            <div class="video-controls-container">
+                <div class="timeline-container"><input type="range" class="timeline" value="0" step="0.1"></div>
+                <div class="controls">
+                    <div class="left-controls">
+                        <button class="control-btn" id="play-pause-btn"><i class="fas fa-play"></i></button>
+                        <div class="time-display"><span id="current-time">0:00</span> / <span id="video-duration">0:00</span></div>
+                    </div>
+                    <div class="right-controls">
+                        <button class="control-btn" id="speed-btn">1x</button>
+                        <button class="control-btn" id="fullscreen-btn"><i class="fas fa-expand"></i></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <button id="sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
+    </div>
+
+    <div id="modal-overlay" class="hidden">
+        <div class="modal-content">
+            <button id="close-modal-btn" title="Close">&times;</button>
+            <h2>Add New Course</h2>
+            <div class="add-options">
+                <button id="add-folder-btn" class="secondary-btn"><i class="fas fa-folder-open"></i> Add Folder</button>
+                <button id="add-videos-btn" class="secondary-btn"><i class="fas fa-film"></i> Add Videos</button>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="thumbnail-uploader" class="hidden" accept="image/*">
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const DB_NAME = 'CourseFlixDB';
+        const DB_VERSION = 3; 
+        const STORE_NAME = 'courses';
+        const PROGRESS_STORE = 'progress';
+        let db;
+
+        // --- Database Helper ---
+        function openDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onerror = () => reject("Error opening IndexedDB");
+                request.onsuccess = () => { db = request.result; resolve(db); };
+                request.onupgradeneeded = (event) => { 
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(PROGRESS_STORE)) db.createObjectStore(PROGRESS_STORE, { keyPath: 'id' });
+                };
+            });
+        }
+        function getStore(storeName, mode) { return db.transaction(storeName, mode).objectStore(storeName); }
+
+        // --- DOM Elements ---
+        const nav = document.querySelector('nav');
+        const navLinks = document.querySelectorAll('.nav-link');
+        const homeBtn = document.getElementById('home-btn');
+        const views = document.querySelectorAll('.view');
+        const courseGrid = document.getElementById('course-grid');
+        const reviewGrid = document.getElementById('review-grid');
+        const practiceGrid = document.getElementById('practice-grid');
+        const videoWrapper = document.getElementById('video-wrapper');
+        const videoPlayer = document.getElementById('video-player');
+        const chapterListDiv = document.getElementById('chapter-list');
+        const courseTitleMenu = document.getElementById('course-title-menu');
+        const backToLibraryBtn = document.querySelector('#player-view .back-link');
+        const playPauseBtn = document.getElementById('play-pause-btn');
+        const timeline = document.querySelector('.timeline');
+        const fullscreenBtn = document.getElementById('fullscreen-btn');
+        const leftSeekOverlay = document.getElementById('left-seek-overlay');
+        const rightSeekOverlay = document.getElementById('right-seek-overlay');
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        const lectureMenu = document.getElementById('lecture-menu');
+        const speedBtn = document.getElementById('speed-btn');
+
+        let courses = [];
+        let currentCourse = null;
+        let currentLectureLi = null;
+        let courseProgress = {};
+        let clickTimer = null;
+        let reviewFilter = null;
+        let practiceFilter = null;
+        let activeStatusCard = null;
+
+        // --- Utility Functions ---
+        function formatTime(timeInSeconds, withHours = true) {
+            const time = Math.round(timeInSeconds || 0);
+            const hours = Math.floor(time / 3600);
+            const minutes = Math.floor((time % 3600) / 60);
+            const seconds = Math.floor(time % 60);
+            if (hours > 0 && withHours) return `${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+        function formatDuration(seconds) {
+            if (isNaN(seconds) || seconds < 0) seconds = 0;
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            if (hours > 0) return `${hours}h ${minutes}m`;
+            return `${minutes}m`;
+        }
+        const naturalSort = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+        async function getVideoDuration(file) { return new Promise(r => {const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{r(v.duration);URL.revokeObjectURL(v.src)};v.onerror=()=>r(0);v.src=URL.createObjectURL(file)}); }
+
+        // --- Progress Management ---
+        async function loadAllProgress() {
+            const allProgress = await new Promise(resolve => getStore(PROGRESS_STORE, 'readonly').getAll().onsuccess = e => resolve(e.target.result));
+            courseProgress = {};
+            allProgress.forEach(item => { courseProgress[item.id] = item; });
+        }
+        async function saveLectureProgress(data) {
+            const progressId = `${data.courseId}_${data.lectureId}`;
+            const existing = courseProgress[progressId] || {};
+            const progressData = { ...existing, id: progressId, ...data };
+            getStore(PROGRESS_STORE, 'readwrite').put(progressData);
+            courseProgress[progressId] = progressData;
+        }
+        function getLectureProgress(courseId, lectureId) {
+            return courseProgress[`${courseId}_${lectureId}`] || {};
+        }
+
+        function calculateCourseProgress(course) {
+            if (!course.lectures) return { completed: 0, total: course.videoCount, percentage: 0, remainingDuration: course.totalDuration || 0 };
+            let completed = 0;
+            let timeCompleted = 0;
+            course.lectures.forEach(lecture => {
+                const progress = getLectureProgress(course.id, lecture.id);
+                if (progress.completed) {
+                    completed++;
+                    timeCompleted += lecture.duration;
+                }
+            });
+            const total = course.lectures.length;
+            const percentage = total > 0 ? (completed / total) * 100 : 0;
+            const remainingDuration = (course.totalDuration || 0) - timeCompleted;
+            return { completed, total, percentage, remainingDuration: Math.max(0, remainingDuration) };
+        }
+
+        // --- View Switching & Rendering ---
+        function switchView(viewId) {
+            activeStatusCard = null; // Clear active card on any view switch
+            nav.classList.toggle('hidden', viewId === 'player-view');
+            views.forEach(view => view.classList.toggle('active', view.id === viewId));
+            navLinks.forEach(link => link.classList.toggle('active', link.dataset.view === viewId));
+            if (viewId === 'review-view') renderStatusView('review', reviewFilter);
+            if (viewId === 'practice-view') renderStatusView('practice', practiceFilter);
+            if (viewId === 'dashboard-view') renderCourseGrid();
+        }
+        
+        async function loadCoursesFromDB() {
+            const storedCourses = await new Promise(resolve => getStore(STORE_NAME, 'readonly').getAll().onsuccess = e => resolve(e.target.result));
+            for (const course of storedCourses) {
+                const handle = course.handle || course.handles?.[0];
+                course.isLinked = handle ? (await handle.queryPermission({ mode: 'read' }) === 'granted') : false;
+            }
+            courses = storedCourses;
+            await renderCourseGrid();
+        }
+
+        async function countVideosInDirectory(dirHandle) { let c=0;const r=/\.(mp4|mkv|webm|mov|avi)$/i;async function R(h){for await(const e of h.values()){if(e.kind==='file'&&r.test(e.name))c++;else if(e.kind==='directory')await R(e)}}await R(dirHandle);return c; }
+        
+        async function scanDirectoryHandle(dirHandle) {
+            const chapters = {}; const lectures = []; let totalDuration = 0; const videoRegex = /\.(mp4|mkv|webm|mov|avi)$/i;
+            async function recurse(currentHandle, path) {
+                for await (const entry of currentHandle.values()) {
+                    if (entry.kind === 'file' && videoRegex.test(entry.name)) {
+                        const chapterName = path || "Main Content";
+                        if (!chapters[chapterName]) chapters[chapterName] = { name: chapterName, lectures: [] };
+                        const file = await entry.getFile(); const duration = await getVideoDuration(file);
+                        const lectureData = { id: `${entry.name}_${file.size}_${file.lastModified}`, name: entry.name.replace(/\.[^/.]+$/, ""), handle: entry, duration: duration };
+                        chapters[chapterName].lectures.push(lectureData); lectures.push(lectureData); totalDuration += duration;
+                    } else if (entry.kind === 'directory') {
+                        await recurse(entry, path ? `${path}/${entry.name}` : entry.name);
+                    }
+                }
+            }
+            await recurse(dirHandle, '');
+            Object.values(chapters).forEach(ch => ch.lectures.sort(naturalSort));
+            const sortedChapters = Object.values(chapters).sort((a,b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+            return { chapters: sortedChapters, videoCount: lectures.length, lectures, totalDuration };
+        }
+
+        async function renderCourseGrid() {
+            courseGrid.innerHTML = '';
+            if (courses.length === 0) { courseGrid.innerHTML = `<p id="no-content-message">No courses added.</p>`; return; }
+            for (const course of courses) {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                
+                if (course.isLinked && course.handle && !course.lectures) {
+                    const courseData = await scanDirectoryHandle(course.handle);
+                    course.lectures = courseData.lectures;
+                    course.totalDuration = courseData.totalDuration;
+                }
+                const progress = calculateCourseProgress(course);
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" data-id="${course.id}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
+                        <i class="fas fa-photo-video"></i>
+                        <button class="remove-thumbnail-btn" data-id="${course.id}" title="Remove Thumbnail"><i class="fas fa-times"></i></button>
+                        <button class="remove-course-btn" data-id="${course.id}" title="Remove Course"><i class="fas fa-trash"></i></button>
+                    </div>
+                    <div class="course-info">
+                        <div>
+                           <h3 title="${course.title}">${course.title}</h3>
+                           <p class="course-meta">${course.videoCount} videos</p>
+                           ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : ''}
+                        </div>
+                        <div class="course-progress-container">
+                            <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${progress.percentage}%"></div></div>
+                            <div class="course-progress-text">${progress.completed} / ${progress.total || course.videoCount} lectures completed</div>
+                        </div>
+                        <button class="enter-course-btn" data-id="${course.id}">Enter Course</button>
+                    </div>`;
+                courseGrid.appendChild(card);
+            }
+        }
+
+        function renderStatusView(status, filter = null) {
+            const grid = status === 'review' ? reviewGrid : practiceGrid;
+            const dropdown = document.getElementById(`filter-dropdown-${status}`);
+            const allItems = Object.values(courseProgress).filter(p => p.status === status);
+            
+            grid.classList.toggle('list-layout', !!filter);
+
+            const courseTitles = [...new Set(allItems.map(item => item.courseTitle))];
+            dropdown.innerHTML = '<a>All Courses</a>';
+            courseTitles.sort().forEach(title => {
+                dropdown.innerHTML += `<a data-course-title="${title}">${title}</a>`;
+            });
+
+            const items = allItems.filter(p => !filter || p.courseTitle === filter);
+            
+            grid.innerHTML = '';
+            if (items.length === 0) {
+                const message = filter ? `No lectures for "${filter}" marked for ${status}.` : `You haven't marked any lectures for ${status}.`;
+                grid.innerHTML = `<p id="no-content-message">${message}</p>`; 
+                return;
+            }
+
+            items.sort((a,b) => (a.courseTitle + a.lectureName).localeCompare(b.courseTitle + b.lectureName)).forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'lecture-review-card';
+                card.dataset.lectureId = item.lectureId;
+                const watchedTime = item.currentTime || 0;
+                const totalTime = item.lectureDuration || 1;
+                const progressPercent = (watchedTime / totalTime) * 100;
+                card.innerHTML = `
+                    <div class="lecture-review-info">
+                        <p class="course-title">${item.courseTitle}</p>
+                        <h3>${item.lectureName}</h3>
+                        <div class="lecture-progress-bar"><div class="lecture-progress-fill" style="width: ${progressPercent}%"></div></div>
+                        <div class="lecture-review-meta"><span class="time-display">${formatTime(watchedTime)} / ${formatTime(totalTime)}</span></div>
+                    </div>
+                    <button class="primary-btn play-from-status" data-course-id="${item.courseId}" data-lecture-id="${item.lectureId}"><i class="fas fa-play"></i> Play</button>`;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- Player ---
+        function updateMenuProgress() {
+            if (!currentCourse) return;
+            const progress = calculateCourseProgress(currentCourse);
+            const container = document.querySelector('#player-view .menu-header');
+            container.querySelector('.course-stats').textContent = `${formatDuration(currentCourse.totalDuration)} total • ${formatDuration(progress.remainingDuration)} remaining`;
+            container.querySelector('.menu-progress-fill').style.width = `${progress.percentage}%`;
+            container.querySelector('.menu-progress-text').textContent = `${progress.completed}/${progress.total} lectures completed`;
+        }
+
+        async function playLectureFromAnywhere(courseId, lectureId) {
+            const course = courses.find(c => c.id === parseInt(courseId));
+            if (!course.isLinked) {
+                const handle = course.handle || course.handles[0];
+                if (await handle.requestPermission({ mode: 'read' }) !== 'granted') { alert('Permission denied.'); return; }
+                course.isLinked = true;
+            }
+            await renderPlayer(courseId, lectureId);
+        }
+
+        async function renderPlayer(courseId, lectureIdToPlay = null) {
+            currentCourse = courses.find(c => c.id === parseInt(courseId));
+            if (!currentCourse) return;
+            switchView('player-view');
+            chapterListDiv.innerHTML = '<p style="text-align:center; padding: 20px;">Loading lectures...</p>';
+            courseTitleMenu.textContent = currentCourse.title;
+
+            if (!currentCourse.lectures) {
+                const courseData = currentCourse.handle ? await scanDirectoryHandle(currentCourse.handle) : { chapters: [], lectures: [] };
+                currentCourse.lectures = courseData.lectures;
+                currentCourse.totalDuration = courseData.totalDuration;
+            }
+            
+            updateMenuProgress();
+            chapterListDiv.innerHTML = '';
+            let targetLi = null, firstLi = null;
+
+            const chapters = {};
+            currentCourse.lectures.forEach(lec => {
+                const chapterName = "Lectures"; // Simplified for now, can use full path later
+                if (!chapters[chapterName]) chapters[chapterName] = [];
+                chapters[chapterName].push(lec);
+            });
+            
+            Object.values(chapters).forEach(chapter => chapter.sort(naturalSort));
+
+            for (const chapterName in chapters) {
+                const chapterDiv = document.createElement('div');
+                chapterDiv.className = 'chapter open';
+                chapterDiv.innerHTML = `<div class="chapter-title"><i class="fas fa-chevron-right"></i>${chapterName}</div>`;
+                const lectureList = document.createElement('ul');
+                lectureList.className = 'lecture-list';
+                for (const lecture of chapters[chapterName]) {
+                    const lectureLi = document.createElement('li');
+                    lectureLi.dataset.lectureId = lecture.id;
+                    const progress = getLectureProgress(currentCourse.id, lecture.id);
+                    lectureLi.innerHTML = `
+                        <div class="lecture-checkbox ${progress.completed ? 'completed' : ''}"><i class="fas fa-check"></i></div>
+                        <div class="lecture-title ${progress.completed ? 'completed' : ''}">${lecture.name}</div>
+                        <span class="lecture-duration">${formatTime(lecture.duration, false)}</span>
+                        <button class="status-btn ${progress.status || ''}" data-lecture-name="${lecture.name}" data-duration="${lecture.duration}">
+                            ${progress.status ? progress.status.toUpperCase() : 'STATUS'}
+                        </button>`;
+                    lectureList.appendChild(lectureLi);
+                    if (!firstLi) firstLi = lectureLi;
+                    if (lecture.id === lectureIdToPlay) targetLi = lectureLi;
+                }
+                chapterDiv.appendChild(lectureList);
+                chapterListDiv.appendChild(chapterDiv);
+            }
+            const liToPlay = targetLi || firstLi;
+            if (liToPlay) await playVideo(liToPlay);
+        }
+
+        async function playVideo(liElement) {
+            if (currentLectureLi) currentLectureLi.classList.remove('active');
+            currentLectureLi = liElement;
+            currentLectureLi.classList.add('active');
+            const lectureId = liElement.dataset.lectureId;
+            const lecture = currentCourse.lectures.find(l => l.id === lectureId);
+            if (!lecture) return;
+            const file = await lecture.handle.getFile();
+            if(videoPlayer.src) URL.revokeObjectURL(videoPlayer.src);
+            videoPlayer.src = URL.createObjectURL(file);
+            videoPlayer.load();
+            const progress = getLectureProgress(currentCourse.id, lecture.id);
+            videoPlayer.addEventListener('loadeddata', () => {
+                if(progress.currentTime) videoPlayer.currentTime = progress.currentTime;
+                videoPlayer.play().catch(e => console.error("Playback error:", e));
+            }, { once: true });
+            videoPlayer.onended = () => {
+                saveLectureProgress({ courseId: currentCourse.id, lectureId, completed: true, currentTime: 0 });
+                updateMenuProgress();
+                liElement.querySelector('.lecture-checkbox').classList.add('completed');
+                liElement.querySelector('.lecture-title').classList.add('completed');
+            };
+        }
+
+        // --- Event Listeners ---
+        navLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); switchView(e.target.dataset.view); }));
+        homeBtn.addEventListener('click', () => switchView('dashboard-view'));
+
+        document.body.addEventListener('click', async (e) => {
+            if (e.target.closest('.enter-course-btn')) { await playLectureFromAnywhere(e.target.closest('.enter-course-btn').dataset.id, null); }
+            if(e.target.closest('.play-from-status')) { 
+                const btn = e.target.closest('.play-from-status');
+                activeStatusCard = btn.closest('.lecture-review-card');
+                await playLectureFromAnywhere(btn.dataset.courseId, btn.dataset.lectureId); 
+            }
+            const removeBtn = e.target.closest('.remove-course-btn');
+            if (removeBtn) { e.stopPropagation(); const courseId = parseInt(removeBtn.dataset.id); if (confirm('Are you sure?')) { getStore(STORE_NAME, 'readwrite').delete(courseId); await loadCoursesFromDB(); } }
+            const thumbPlaceholder = e.target.closest('.thumbnail-placeholder');
+            if (thumbPlaceholder && !removeBtn && !e.target.closest('.remove-thumbnail-btn')) { document.getElementById('thumbnail-uploader').dataset.courseId = thumbPlaceholder.dataset.id; document.getElementById('thumbnail-uploader').click(); }
+            if (e.target.closest('.remove-thumbnail-btn')) { e.stopPropagation(); const btn = e.target.closest('.remove-thumbnail-btn'); const course = courses.find(c => c.id === parseInt(btn.dataset.id)); if (course) { delete course.thumbnail; getStore(STORE_NAME, 'readwrite').put(course); renderCourseGrid(); } }
+            
+            const filterBtnReview = e.target.closest('#filter-btn-review');
+            if(filterBtnReview) document.getElementById('filter-dropdown-review').classList.toggle('hidden');
+            const filterBtnPractice = e.target.closest('#filter-btn-practice');
+            if(filterBtnPractice) document.getElementById('filter-dropdown-practice').classList.toggle('hidden');
+            
+            const filterLink = e.target.closest('.filter-dropdown a');
+            if(filterLink) {
+                e.preventDefault();
+                const title = filterLink.dataset.courseTitle;
+                const dropdown = filterLink.parentElement;
+                if (dropdown.id.includes('review')) {
+                    reviewFilter = title;
+                    renderStatusView('review', reviewFilter);
+                } else {
+                    practiceFilter = title;
+                    renderStatusView('practice', practiceFilter);
+                }
+                dropdown.classList.add('hidden');
+            }
+        });
+
+        chapterListDiv.addEventListener('click', (e) => {
+            const lectureLi = e.target.closest('li');
+            const chapterTitle = e.target.closest('.chapter-title');
+            if(chapterTitle) { chapterTitle.parentElement.classList.toggle('open'); return; }
+            if(!lectureLi) return;
+            if (e.target.closest('.status-btn')) {
+                e.stopPropagation();
+                const btn = e.target.closest('.status-btn');
+                const lectureId = lectureLi.dataset.lectureId;
+                const currentStatus = getLectureProgress(currentCourse.id, lectureId).status;
+                let newStatus = 'review';
+                if (currentStatus === 'review') newStatus = 'practice';
+                else if (currentStatus === 'practice') newStatus = null;
+                btn.className = 'status-btn';
+                if (newStatus) btn.classList.add(newStatus);
+                btn.textContent = newStatus ? newStatus.toUpperCase() : 'STATUS';
+                saveLectureProgress({ courseId: currentCourse.id, courseTitle: currentCourse.title, lectureId, lectureName: btn.dataset.lectureName, lectureDuration: parseFloat(btn.dataset.duration), status: newStatus });
+            } else if(e.target.closest('.lecture-checkbox')) {
+                e.stopPropagation();
+                const checkbox = e.target.closest('.lecture-checkbox');
+                const lectureId = lectureLi.dataset.lectureId;
+                const isCompleted = !checkbox.classList.contains('completed');
+                checkbox.classList.toggle('completed');
+                lectureLi.querySelector('.lecture-title').classList.toggle('completed');
+                saveLectureProgress({ courseId: currentCourse.id, lectureId, completed: isCompleted });
+                updateMenuProgress();
+            } else {
+                playVideo(lectureLi);
+            }
+        });
+        
+        backToLibraryBtn.addEventListener('click', () => {
+            videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
+            switchView('dashboard-view');
+        });
+        
+        setInterval(() => {
+            if (currentCourse && currentLectureLi && !videoPlayer.paused) {
+                saveLectureProgress({ courseId: currentCourse.id, lectureId: currentLectureLi.dataset.lectureId, currentTime: videoPlayer.currentTime });
+            }
+        }, 5000);
+        
+        document.getElementById('add-course-btn').addEventListener('click', () => document.getElementById('modal-overlay').classList.remove('hidden'));
+        document.getElementById('close-modal-btn').addEventListener('click', () => document.getElementById('modal-overlay').classList.add('hidden'));
+        document.getElementById('add-folder-btn').addEventListener('click', async () => { try{const d=await window.showDirectoryPicker(),c=await countVideosInDirectory(d);if(c===0)return alert('No videos found.');getStore(STORE_NAME,'readwrite').add({id:Date.now(),title:d.name,handle:d,videoCount:c});await loadCoursesFromDB()}catch(e){console.log(e)}finally{document.getElementById('modal-overlay').classList.add('hidden')} });
+        document.getElementById('thumbnail-uploader').addEventListener('change', (e) => { const file = e.target.files[0]; const courseId = parseInt(e.target.dataset.courseId); if (!file || !courseId) return; const reader = new FileReader(); reader.onload = async (event) => { const course = courses.find(c=>c.id === courseId); if(course) { course.thumbnail = event.target.result; getStore(STORE_NAME, 'readwrite').put(course); renderCourseGrid(); } }; reader.readAsDataURL(file); });
+        
+        sidebarToggleBtn.addEventListener('click', () => {
+            lectureMenu.classList.toggle('hidden');
+            sidebarToggleBtn.classList.toggle('collapsed');
+        });
+        
+        const showSeekIcon = (overlay) => { overlay.classList.add('show-icon'); setTimeout(() => overlay.classList.remove('show-icon'), 500); };
+        playPauseBtn.addEventListener('click', () => videoPlayer.paused ? videoPlayer.play() : videoPlayer.pause());
+        videoPlayer.addEventListener('play', () => playPauseBtn.innerHTML = `<i class="fas fa-pause"></i>`);
+        videoPlayer.addEventListener('pause', () => playPauseBtn.innerHTML = `<i class="fas fa-play"></i>`);
+        videoWrapper.addEventListener('click', (e) => { if (e.target.closest('.video-controls-container')) return; if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } clickTimer = setTimeout(() => { playPauseBtn.click(); }, 250); });
+        videoWrapper.addEventListener('dblclick', (e) => { if (e.target.closest('.video-controls-container')) return; clearTimeout(clickTimer); clickTimer = null; const r=videoWrapper.getBoundingClientRect(),c=e.clientX-r.left;if(c<r.width/2){videoPlayer.currentTime-=10;showSeekIcon(leftSeekOverlay)}else{videoPlayer.currentTime+=10;showSeekIcon(rightSeekOverlay)}});
+        videoPlayer.addEventListener('timeupdate', () => { 
+            const currentTime = videoPlayer.currentTime;
+            document.getElementById('current-time').textContent = formatTime(currentTime); 
+            if (!isNaN(videoPlayer.duration)) { 
+                const duration = videoPlayer.duration;
+                timeline.value = currentTime; 
+                const p = (currentTime / duration) * 100; 
+                timeline.style.background = `linear-gradient(to right, var(--accent-primary) ${p}%, rgba(255, 255, 255, 0.3) ${p}%)`;
+                if(activeStatusCard) {
+                    activeStatusCard.querySelector('.lecture-progress-fill').style.width = `${p}%`;
+                    activeStatusCard.querySelector('.time-display').textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
+                }
+            } 
+        });
+        videoPlayer.addEventListener('loadedmetadata', () => { document.getElementById('video-duration').textContent = formatTime(videoPlayer.duration); timeline.max = videoPlayer.duration; });
+        timeline.addEventListener('input', (e) => videoPlayer.currentTime = e.target.value);
+        fullscreenBtn.addEventListener('click', () => { if (!document.fullscreenElement) document.querySelector('#player-view').requestFullscreen().catch(err => alert(`Error: ${err.message}`)); else document.exitFullscreen(); });
+        
+        const speeds = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 0.75]; let currentSpeedIndex = 0;
+        speedBtn.addEventListener('click', () => {
+            currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
+            videoPlayer.playbackRate = speeds[currentSpeedIndex];
+            speedBtn.textContent = `${speeds[currentSpeedIndex]}x`;
+        });
+        
+        document.addEventListener('keydown', (e) => { const view = document.querySelector('.view.active'); if (!view || view.id !== 'player-view' || e.target.tagName === 'INPUT') return; e.preventDefault(); switch(e.code) { case 'Space': playPauseBtn.click(); break; case 'ArrowRight': videoPlayer.currentTime += 5; break; case 'ArrowLeft': videoPlayer.currentTime -= 5; break; case 'ArrowUp': videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break; case 'ArrowDown': videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break; case 'KeyF': fullscreenBtn.click(); break; case 'Escape': if (document.fullscreenElement) document.exitFullscreen(); break; } });
+
+        async function main() {
+            if (!window.indexedDB || !window.showDirectoryPicker) { document.body.innerHTML = "<h1>Browser Not Supported</h1>"; return; }
+            await openDB();
+            await loadAllProgress();
+            await loadCoursesFromDB();
+            switchView('dashboard-view');
+        }
+        main();
+    });
+    </script>
+</body>
+</html>
