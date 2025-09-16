@@ -205,10 +205,25 @@
         .back-link { color:var(--accent-primary);text-decoration:none;display:block;margin-bottom:15px;font-weight:500; cursor: pointer;}
         .back-link:hover { text-decoration: underline; }
         #chapter-list { overflow-y:auto; flex-grow:1; padding:10px; }
-        .chapter-title { font-weight:bold; cursor:pointer; padding:12px; border-radius:8px; display:flex; align-items:center; gap:8px; transition: background-color 0.2s; }
+        .chapter-title { font-weight:bold; cursor:pointer; padding:12px; border-radius:8px; display:flex; align-items:center; gap:8px; transition: background-color 0.2s; position: relative;}
         .chapter-title:hover { background-color: var(--bg-tertiary); }
+        .chapter-title-text { flex-grow: 1; cursor: text; }
+        .chapter-duration { font-size: 0.8rem; color: var(--text-secondary); margin-left: 10px; }
+        
+        .chapter-drag-handle {
+            cursor: grab;
+            color: var(--text-secondary);
+            padding: 0 10px 0 2px;
+            margin-left: -12px; /* Pull it left */
+            opacity: 0.4;
+            transition: opacity 0.2s;
+        }
+        .chapter-title:hover .chapter-drag-handle { opacity: 1; }
+        .chapter.dragging { opacity: 0.5; background: var(--bg-tertiary); }
+        .chapter-drop-indicator { height: 2px; background-color: var(--accent-primary); margin: -1px 0; }
+
         .chapter-title i { transition: transform 0.2s; }
-        .chapter.open > .chapter-title i { transform: rotate(90deg); }
+        .chapter.open > .chapter-title i:not(.chapter-drag-handle) { transform: rotate(90deg); }
         .lecture-list { list-style:none; padding-left: 20px; margin: 0; display: none; }
         .chapter.open > .lecture-list { display: block; }
         .lecture-list li { 
@@ -221,8 +236,9 @@
         .lecture-checkbox.completed { background-color: var(--accent-primary); border-color: var(--accent-primary); }
         .lecture-checkbox i { color: white; font-size: 12px; opacity: 0; }
         .lecture-checkbox.completed i { opacity: 1; }
-        .lecture-title { flex-grow: 1; transition: opacity 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;}
+        .lecture-title { flex-grow: 1; transition: opacity 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: text;}
         .lecture-title.completed { text-decoration: line-through; opacity: 0.6; }
+        .lecture-title-input { width: 100%; background: var(--bg-tertiary); border: 1px solid var(--border-secondary); border-radius: 4px; padding: 2px 4px; color: var(--text-primary); font-weight: normal; font-size: 1em; }
         .lecture-duration { font-size: 0.7rem; color: var(--text-secondary); margin-left: auto; flex-shrink: 0; }
         .status-btn { border: none; border-radius: 6px; font-size: 0.65rem; font-weight: 700; padding: 4px 8px; margin-left: 10px; cursor: pointer; flex-shrink: 0; background-color: var(--bg-tertiary); color: var(--text-secondary); }
         .status-btn.review { background-color: var(--status-review); color: white; }
@@ -235,22 +251,36 @@
             position: relative; z-index: 50; overflow: hidden; transition: width 0.3s ease-in-out;
         }
         #media-viewer.hidden { width: 0; border-left: none; }
-        #collapse-media-btn {
-            position: absolute; top: 50%; left: 0; transform: translate(-100%, -50%); z-index: 61;
-            background: var(--accent-primary); color: white; border: none; width: 25px; height: 70px;
-            border-radius: 8px 0 0 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-            transition: background-color 0.2s; font-size: 1rem;
-        }
-        #collapse-media-btn:hover { background-color: var(--accent-hover); }
+        
         #media-viewer-header {
-            display: flex; flex-direction: column; align-items: flex-start; padding: 1rem;
+            display: flex; align-items: center; justify-content: space-between; padding: 1rem;
             border-bottom: 1px solid var(--border-primary); background-color: var(--bg-secondary); flex-shrink: 0;
+            gap: 1rem;
         }
         #viewer-title {
-            margin: 0 0 0.75rem 0; font-size: 1.1rem; font-weight: 600;
-            text-overflow: ellipsis; white-space: nowrap; overflow: hidden; width: 100%;
+            margin: 0; font-size: 1.1rem; font-weight: 600;
+            text-overflow: ellipsis; white-space: nowrap; overflow: hidden; flex-grow: 1;
         }
-        .viewer-actions { display: flex; align-items: center; gap: 0.5rem; }
+        .viewer-actions { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; }
+        
+        #close-viewer-btn {
+            background-color: var(--accent-primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s;
+        }
+        #close-viewer-btn:hover {
+            background-color: var(--accent-hover);
+        }
+
         #delete-viewer-file {
             background-color: var(--accent-danger); color: white; border: none; border-radius: 6px;
             font-size: 0.8rem; font-weight: 500; padding: 6px 12px; cursor: pointer;
@@ -268,9 +298,32 @@
             width: 100%; transition: width 0.3s ease-in-out;
         }
         
+        /* --- File Switcher --- */
+        #file-switcher-container { position: relative; }
+        #file-switcher-btn {
+            background-color: var(--bg-tertiary); color: var(--text-primary); border: 1px solid var(--border-secondary);
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 500;
+        }
+        #file-switcher-dropdown {
+            position: absolute; top: 110%; right: 0; background-color: var(--bg-secondary);
+            border: 1px solid var(--border-primary); border-radius: 6px; box-shadow: var(--shadow);
+            z-index: 70; min-width: 120px; overflow: hidden;
+        }
+        #file-switcher-dropdown button {
+            display: block; width: 100%; text-align: left; padding: 8px 12px;
+            background: none; border: none; color: var(--text-primary); cursor: pointer;
+        }
+        #file-switcher-dropdown button:hover { background-color: var(--bg-tertiary); }
+
+
         /* --- Video Player & Controls --- */
         #video-wrapper { flex-grow:1;background-color:black;display:flex;justify-content:center;align-items:center;position:relative;overflow:hidden;}
         #video-player { width:100%;height:100%;outline:none;}
+        #unmute-btn {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.7); color: white; border: 2px solid white; border-radius: 8px;
+            padding: 12px 20px; font-size: 1.1rem; font-weight: 600; cursor: pointer; z-index: 25;
+        }
         .seek-overlay{position:absolute;top:0;width:50%;height:100%;z-index:10;pointer-events:none;}
         #left-seek-overlay{left:0;} #right-seek-overlay{right:0;}
         .seek-overlay i{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:48px;color:white;opacity:0;pointer-events:none;}
@@ -287,10 +340,47 @@
         .left-controls, .right-controls { display:flex;align-items:center;gap:15px; }
         .control-btn { background:none;border:none;color:white;font-size:18px;cursor:pointer;padding:5px; }
         
-        #sidebar-toggle-btn{ position:fixed;top:50%;left:380px;transform:translateY(-50%);z-index:1001;background:var(--accent-primary);color:white;border:none;width:25px;height:70px;border-radius:0 8px 8px 0;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:left 0.3s ease; }
+        #sidebar-toggle-btn { 
+            position: fixed;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            background:var(--accent-primary);
+            color:white;
+            border:none;
+            width:25px;
+            height:70px;
+            cursor:pointer;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            transition: all 0.3s ease;
+            left:380px;
+            border-radius:0 8px 8px 0;
+        }
         #sidebar-toggle-btn.collapsed { left:0; }
         #sidebar-toggle-btn i { transition:transform 0.3s; }
         #sidebar-toggle-btn.collapsed i { transform:rotate(180deg); }
+
+        #media-viewer-toggle-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 55; /* Below resize handle */
+            background: var(--accent-primary);
+            color: white;
+            border: none;
+            width: 25px;
+            height: 70px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.3s ease, right 0.3s ease;
+            right: 0;
+            border-radius: 8px 0 0 8px;
+        }
+       
         #no-content-message { text-align: center; color: var(--text-secondary); padding: 50px; }
         .hidden { display: none !important; }
         .file-controls { display: flex; gap: 5px; align-items: center; }
@@ -355,6 +445,7 @@
             <div id="video-wrapper-container">
                 <div id="video-wrapper">
                     <video id="video-player"></video>
+                    <button id="unmute-btn" class="hidden"><i class="fas fa-volume-mute"></i> Click to Unmute</button>
                     <div class="seek-overlay" id="left-seek-overlay"><i class="fas fa-backward"></i></div>
                     <div class="seek-overlay" id="right-seek-overlay"><i class="fas fa-forward"></i></div>
                     <div class="video-controls-container">
@@ -373,16 +464,18 @@
                 </div>
             </div>
             <div id="media-viewer" class="hidden">
-                <button id="collapse-media-btn" title="Close Viewer"><i class="fas fa-chevron-right"></i></button>
                 <div id="media-resize-handle"></div>
                 <div id="media-viewer-header">
                     <h3 id="viewer-title"></h3>
                     <div class="viewer-actions">
+                        <div id="file-switcher-container"></div>
                         <button id="delete-viewer-file" title="Delete File"><i class="fas fa-trash"></i> Delete</button>
+                        <button id="close-viewer-btn" title="Close Viewer"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
                 <iframe id="media-viewer-frame"></iframe>
             </div>
+            <button id="media-viewer-toggle-btn" class="hidden"><i class="fas fa-chevron-left"></i></button>
         </div>
         <button id="sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
     </div>
@@ -433,6 +526,7 @@
         const playerView = document.getElementById('player-view');
         const videoWrapper = document.getElementById('video-wrapper');
         const videoPlayer = document.getElementById('video-player');
+        const unmuteBtn = document.getElementById('unmute-btn');
         const chapterListDiv = document.getElementById('chapter-list');
         const courseTitleMenu = document.getElementById('course-title-menu');
         const backToLibraryBtn = document.querySelector('#player-view .back-link');
@@ -442,6 +536,7 @@
         const leftSeekOverlay = document.getElementById('left-seek-overlay');
         const rightSeekOverlay = document.getElementById('right-seek-overlay');
         const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        const mediaViewerToggleBtn = document.getElementById('media-viewer-toggle-btn');
         const lectureMenu = document.getElementById('lecture-menu');
         const speedBtn = document.getElementById('speed-btn');
         const mediaViewer = document.getElementById('media-viewer');
@@ -452,7 +547,7 @@
         const mediaResizeHandle = document.getElementById('media-resize-handle');
         const deleteViewerFileBtn = document.getElementById('delete-viewer-file');
         const totalTimeDisplay = document.getElementById('total-time-left-display');
-        const collapseMediaBtn = document.getElementById('collapse-media-btn');
+        const closeViewerBtn = document.getElementById('close-viewer-btn');
 
         let courses = [];
         let currentCourse = null;
@@ -466,6 +561,7 @@
         let activeFileUrl = null;
         let activeViewerFileType = null;
         let isResizing = false;
+        let userInteracted = false;
 
         // --- Utility Functions ---
         function formatTime(timeInSeconds, withHours = true) {
@@ -535,8 +631,10 @@
             
             if (totalSecondsLeft > 0) {
                 totalTimeDisplay.textContent = formatTotalDuration(totalSecondsLeft);
+                totalTimeDisplay.style.display = 'inline-flex';
             } else {
                 totalTimeDisplay.textContent = formatTotalDuration(0);
+                 totalTimeDisplay.style.display = 'none';
             }
         }
 
@@ -592,6 +690,7 @@
                             const lectureData = {
                                 id: `${entry.name}_${file.size}_${file.lastModified}`,
                                 name: entry.name.replace(/\.[^/.]+$/, ""),
+                                displayName: entry.name.replace(/\.[^/.]+$/, ""),
                                 handle: entry,
                                 duration: duration,
                                 chapter: chapterName
@@ -621,7 +720,7 @@
                 return;
             }
 
-            let totalSecondsLeft = 0;
+            updateTotalTimeLeftDisplay();
 
             for (const course of courses) {
                 const card = document.createElement('div');
@@ -634,8 +733,7 @@
                     course.chapters = courseData.chapters;
                 }
                 const progress = calculateCourseProgress(course);
-                totalSecondsLeft += progress.remainingDuration;
-
+               
                 card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" data-id="${course.id}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                         <i class="fas fa-photo-video"></i>
@@ -656,13 +754,6 @@
                         <button class="enter-course-btn" data-id="${course.id}">Enter Course</button>
                     </div>`;
                 courseGrid.appendChild(card);
-            }
-
-            if (totalSecondsLeft > 0) {
-                totalTimeDisplay.textContent = formatTotalDuration(totalSecondsLeft);
-                totalTimeDisplay.style.display = 'inline-flex';
-            } else {
-                totalTimeDisplay.style.display = 'none';
             }
         }
 
@@ -790,20 +881,38 @@
             }
 
             updateMenuProgress();
-            chapterListDiv.innerHTML = '';
-            let targetLi = null, firstLi = null;
-            
-            if (!chaptersToDisplay || chaptersToDisplay.length === 0 || (chaptersToDisplay.length === 1 && chaptersToDisplay[0].lectures.length === 0)) {
-                chapterListDiv.innerHTML = `<p id="no-content-message">No lectures found with this status.</p>`;
+            renderChapterList(chaptersToDisplay, lectureIdToPlay);
+
+            const liToPlay = chapterListDiv.querySelector(`li[data-lecture-id="${lectureIdToPlay}"]`) || chapterListDiv.querySelector('li');
+            if (liToPlay) await playVideo(liToPlay, startTime);
+        }
+        
+        function renderChapterList(chaptersToDisplay, lectureIdToPlay = null) {
+             chapterListDiv.innerHTML = '';
+             if (!chaptersToDisplay || chaptersToDisplay.length === 0 || (chaptersToDisplay.length === 1 && chaptersToDisplay[0].lectures.length === 0)) {
+                chapterListDiv.innerHTML = `<p id="no-content-message">No lectures found for this course or filter.</p>`;
                 return;
             }
-
-            for (const chapter of chaptersToDisplay) {
+            
+            chaptersToDisplay.forEach((chapter) => {
                 const chapterDiv = document.createElement('div');
                 chapterDiv.className = 'chapter open';
-                chapterDiv.innerHTML = `<div class="chapter-title"><i class="fas fa-chevron-right"></i>${chapter.name}</div>`;
+                chapterDiv.dataset.chapterName = chapter.name;
+                chapterDiv.draggable = true;
+
+                const chapterDuration = chapter.lectures.reduce((sum, lect) => sum + (lect.duration || 0), 0);
+
+                chapterDiv.innerHTML = `
+                    <div class="chapter-title">
+                        <i class="fas fa-grip-vertical chapter-drag-handle" title="Drag to reorder"></i>
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="chapter-title-text" title="Double-click to rename">${chapter.name}</span>
+                        <span class="chapter-duration">${formatDuration(chapterDuration)}</span>
+                    </div>`;
+
                 const lectureList = document.createElement('ul');
                 lectureList.className = 'lecture-list';
+
                 for (const lecture of chapter.lectures) {
                     const progress = getLectureProgress(currentCourse.id, lecture.id);
                     const lectureLi = document.createElement('li');
@@ -819,24 +928,20 @@
 
                     lectureLi.innerHTML = `
                         <div class="lecture-checkbox ${progress.completed ? 'completed' : ''}"><i class="fas fa-check"></i></div>
-                        <div class="lecture-title ${progress.completed ? 'completed' : ''}" title="${lecture.name}">${lecture.name}</div>
+                        <div class="lecture-title ${progress.completed ? 'completed' : ''}" title="${lecture.displayName} (Double-click to rename)">${lecture.displayName}</div>
                         <div class="file-controls">
                             ${pdfBtn}
                             ${assignBtn}
                         </div>
                         <span class="lecture-duration">${formatTime(lecture.duration, false)}</span>
-                        <button class="status-btn ${progress.status || ''}" data-lecture-name="${lecture.name}" data-duration="${lecture.duration}">
+                        <button class="status-btn ${progress.status || ''}" data-lecture-name="${lecture.displayName}" data-duration="${lecture.duration}">
                             ${progress.status ? progress.status.toUpperCase() : 'STATUS'}
                         </button>`;
                     lectureList.appendChild(lectureLi);
-                    if (!firstLi) firstLi = lectureLi;
-                    if (lecture.id === lectureIdToPlay) targetLi = lectureLi;
                 }
                 chapterDiv.appendChild(lectureList);
                 chapterListDiv.appendChild(chapterDiv);
-            }
-            const liToPlay = targetLi || firstLi;
-            if (liToPlay) await playVideo(liToPlay, startTime);
+            });
         }
 
         async function playVideo(liElement, startTime = null) {
@@ -847,25 +952,49 @@
             const lecture = currentCourse.lectures.find(l => l.id === lectureId);
             if (!lecture) return;
 
+            updateMediaViewerToggleButton();
+
             try {
                 const file = await lecture.handle.getFile();
                 if(videoPlayer.src) URL.revokeObjectURL(videoPlayer.src);
                 videoPlayer.src = URL.createObjectURL(file);
                 videoPlayer.load();
 
-                videoPlayer.addEventListener('loadeddata', () => {
+                videoPlayer.addEventListener('loadeddata', async () => {
                     let timeToSet = startTime;
                     if (timeToSet === null) {
                         const progress = getLectureProgress(currentCourse.id, lecture.id);
                         if(progress.currentTime) timeToSet = progress.currentTime;
                     }
                     if(timeToSet) videoPlayer.currentTime = timeToSet;
-                    videoPlayer.play().catch(e => console.error("Playback error:", e));
+                    
+                    unmuteBtn.classList.add('hidden');
+                    videoPlayer.muted = !userInteracted;
+
+                    try {
+                        await videoPlayer.play();
+                    } catch (err) {
+                        console.warn("Autoplay was prevented:", err.message);
+                        videoPlayer.muted = true;
+                        unmuteBtn.classList.remove('hidden');
+                        await videoPlayer.play();
+                    }
                 }, { once: true });
 
                 videoPlayer.onended = () => {
-                    saveLectureProgress({ courseId: currentCourse.id, lectureId, completed: true, currentTime: 0 });
+                    const lectureId = currentLectureLi.dataset.lectureId;
+                    const lecture = currentCourse.lectures.find(l => l.id === lectureId);
+                    saveLectureProgress({ 
+                        courseId: currentCourse.id, 
+                        lectureId, 
+                        completed: true, 
+                        currentTime: 0,
+                        lectureName: lecture.displayName,
+                        courseTitle: currentCourse.title,
+                        lectureDuration: lecture.duration
+                    });
                     updateMenuProgress();
+                    updateTotalTimeLeftDisplay();
                     liElement.querySelector('.lecture-checkbox').classList.add('completed');
                     liElement.querySelector('.lecture-title').classList.add('completed');
                 };
@@ -887,7 +1016,6 @@
             if (btnElement) btnElement.classList.add('loading');
 
             try {
-                // Verify permission again, in case it was revoked
                 if ((await course.handle.queryPermission({ mode: 'read' })) !== 'granted') {
                     if ((await course.handle.requestPermission({ mode: 'read' })) !== 'granted') {
                         alert('Permission denied. Cannot refresh course.');
@@ -897,7 +1025,6 @@
 
                 const newCourseData = await scanDirectoryHandle(course.handle);
 
-                // Update course with new data, keeping the original ID, title, handle, and thumbnail
                 course.lectures = newCourseData.lectures;
                 course.chapters = newCourseData.chapters;
                 course.videoCount = newCourseData.videoCount;
@@ -913,7 +1040,7 @@
             }
         }
 
-        async function showMediaViewer(fileHandle, fileType, fileName) {
+        async function showMediaViewer(fileHandle, fileType, fileName, lectureProgress) {
             try {
                 let file = fileHandle instanceof File ? fileHandle : await fileHandle.getFile();
                 if (activeFileUrl) URL.revokeObjectURL(activeFileUrl);
@@ -922,12 +1049,16 @@
                 mediaViewerFrame.src = activeFileUrl;
                 viewerTitle.textContent = fileName || file.name;
                 activeViewerFileType = fileType.toLowerCase();
+                
+                updateFileSwitcher(lectureProgress, activeViewerFileType);
 
                 const preferredWidth = localStorage.getItem('viewerWidth') || '500px';
                 playerView.style.setProperty('--viewer-width', preferredWidth);
                 mediaViewer.style.width = preferredWidth;
                 playerView.classList.add('viewer-active');
                 mediaViewer.classList.remove('hidden');
+                
+                mediaViewerToggleBtn.classList.add('hidden');
 
                 deleteViewerFileBtn.dataset.type = activeViewerFileType;
                 deleteViewerFileBtn.classList.add('visible');
@@ -935,6 +1066,37 @@
                 console.error("Error showing file:", error);
                 alert("Failed to open file. The original may have been moved or deleted. Please try re-adding it.");
                 hideMediaViewer();
+            }
+        }
+
+        function updateFileSwitcher(lectureProgress, currentType) {
+            const container = document.getElementById('file-switcher-container');
+            container.innerHTML = '';
+
+            const hasPdf = !!lectureProgress.pdfHandle;
+            const hasAssignment = !!lectureProgress.assignmentHandle;
+
+            if (hasPdf && hasAssignment) {
+                const otherType = currentType === 'pdf' ? 'assignment' : 'pdf';
+                const otherHandle = otherType === 'pdf' ? lectureProgress.pdfHandle : lectureProgress.assignmentHandle;
+                const otherName = otherType === 'pdf' ? lectureProgress.pdfName : lectureProgress.assignmentName;
+
+                container.innerHTML = `
+                    <button id="file-switcher-btn">${currentType.toUpperCase()} <i class="fas fa-chevron-down fa-xs"></i></button>
+                    <div id="file-switcher-dropdown" class="hidden">
+                         <button data-type="${otherType}">${otherType === 'pdf' ? 'View Notes' : 'View Assignment'}</button>
+                    </div>`;
+
+                const btn = container.querySelector('#file-switcher-btn');
+                const dropdown = container.querySelector('#file-switcher-dropdown');
+                btn.onclick = () => dropdown.classList.toggle('hidden');
+                
+                dropdown.querySelector('button').onclick = () => {
+                    showMediaViewer(otherHandle, otherType, otherName, lectureProgress);
+                };
+                document.addEventListener('click', (e) => {
+                     if (!container.contains(e.target)) dropdown.classList.add('hidden');
+                }, { once: true });
             }
         }
         
@@ -949,6 +1111,21 @@
             mediaViewerFrame.src = 'about:blank';
             activeViewerFileType = null;
             playerView.style.setProperty('--viewer-width', '0px');
+            updateMediaViewerToggleButton();
+        }
+
+        function updateMediaViewerToggleButton() {
+            if (!currentLectureLi) {
+                mediaViewerToggleBtn.classList.add('hidden');
+                return;
+            }
+            const lectureId = currentLectureLi.dataset.lectureId;
+            const progress = getLectureProgress(currentCourse.id, lectureId);
+            const hasFiles = progress.pdfHandle || progress.assignmentHandle;
+            
+            // Show toggle button only if files exist AND the viewer is currently closed
+            const viewerIsHidden = mediaViewer.classList.contains('hidden');
+            mediaViewerToggleBtn.classList.toggle('hidden', !hasFiles || !viewerIsHidden);
         }
 
         // --- Event Listeners ---
@@ -956,6 +1133,10 @@
         homeBtn.addEventListener('click', () => switchView('dashboard-view'));
 
         document.body.addEventListener('click', async (e) => {
+            userInteracted = true;
+            videoPlayer.muted = false;
+            unmuteBtn.classList.add('hidden');
+
             if (e.target.closest('.enter-course-btn')) { await playLectureFromAnywhere(e.target.closest('.enter-course-btn').dataset.id, null); }
             
             const reviewCard = e.target.closest('#review-grid .lecture-review-card, #practice-grid .lecture-review-card');
@@ -1019,11 +1200,16 @@
         chapterListDiv.addEventListener('click', async (e) => {
             const lectureLi = e.target.closest('li');
             const chapterTitle = e.target.closest('.chapter-title');
-            if(chapterTitle) { chapterTitle.parentElement.classList.toggle('open'); return; }
+
+            if(chapterTitle && !e.target.closest('.chapter-drag-handle') && !e.target.classList.contains('chapter-title-text')) { 
+                chapterTitle.parentElement.classList.toggle('open'); 
+                return; 
+            }
             if(!lectureLi) return;
 
             const lectureId = lectureLi.dataset.lectureId;
             const lectureProgress = getLectureProgress(currentCourse.id, lectureId);
+            const lecture = currentCourse.lectures.find(l => l.id === lectureId);
 
             if (e.target.closest('.add-pdf-btn')) {
                 addPdfInput.dataset.lectureId = lectureId;
@@ -1033,19 +1219,17 @@
                 addAssignmentInput.click();
             } else if (e.target.closest('.view-pdf-btn')) {
                 if (lectureProgress.pdfHandle) {
-                    if (activeViewerFileType === 'pdf') hideMediaViewer();
-                    else showMediaViewer(lectureProgress.pdfHandle, 'PDF', lectureProgress.pdfName);
+                    if (activeViewerFileType === 'pdf' && !mediaViewer.classList.contains('hidden')) hideMediaViewer();
+                    else showMediaViewer(lectureProgress.pdfHandle, 'PDF', lectureProgress.pdfName, lectureProgress);
                 }
             } else if (e.target.closest('.view-assignment-btn')) {
                 if (lectureProgress.assignmentHandle) {
-                    if (activeViewerFileType === 'assignment') hideMediaViewer();
-                    else showMediaViewer(lectureProgress.assignmentHandle, 'Assignment', lectureProgress.assignmentName);
+                    if (activeViewerFileType === 'assignment' && !mediaViewer.classList.contains('hidden')) hideMediaViewer();
+                    else showMediaViewer(lectureProgress.assignmentHandle, 'Assignment', lectureProgress.assignmentName, lectureProgress);
                 }
             } else if (e.target.closest('.status-btn')) {
                 e.stopPropagation();
                 const btn = e.target.closest('.status-btn');
-                const lectureName = btn.dataset.lectureName;
-                const lectureDuration = parseFloat(btn.dataset.duration);
                 const currentStatus = lectureProgress.status;
                 let newStatus = 'review';
                 if (currentStatus === 'review') newStatus = 'practice';
@@ -1053,19 +1237,88 @@
                 btn.className = 'status-btn';
                 if (newStatus) btn.classList.add(newStatus);
                 btn.textContent = newStatus ? newStatus.toUpperCase() : 'STATUS';
-                saveLectureProgress({ ...lectureProgress, status: newStatus, courseTitle: currentCourse.title, lectureName, lectureDuration, courseId: currentCourse.id, lectureId: lectureId });
+                await saveLectureProgress({ ...lectureProgress, status: newStatus, courseTitle: currentCourse.title, lectureName: lecture.displayName, lectureDuration: lecture.duration, courseId: currentCourse.id, lectureId: lectureId });
             } else if(e.target.closest('.lecture-checkbox')) {
                 e.stopPropagation();
                 const checkbox = e.target.closest('.lecture-checkbox');
                 const isCompleted = !checkbox.classList.contains('completed');
                 checkbox.classList.toggle('completed');
                 lectureLi.querySelector('.lecture-title').classList.toggle('completed');
-                saveLectureProgress({ ...lectureProgress, completed: isCompleted, courseId: currentCourse.id, lectureId: lectureId });
+                await saveLectureProgress({ 
+                    ...lectureProgress, 
+                    completed: isCompleted, 
+                    courseId: currentCourse.id, 
+                    lectureId: lectureId,
+                    lectureName: lecture.displayName,
+                    courseTitle: currentCourse.title,
+                    lectureDuration: lecture.duration
+                });
                 updateMenuProgress();
                 updateTotalTimeLeftDisplay();
-            } else {
+            } else if (!e.target.classList.contains('lecture-title-input')) {
                 playVideo(lectureLi);
             }
+        });
+        
+        chapterListDiv.addEventListener('dblclick', (e) => {
+            const titleDiv = e.target.closest('.lecture-title, .chapter-title-text');
+            if (!titleDiv || titleDiv.querySelector('input')) return;
+
+            const isChapter = titleDiv.classList.contains('chapter-title-text');
+            const originalText = titleDiv.textContent;
+            
+            titleDiv.innerHTML = `<input type="text" class="lecture-title-input" value="${originalText}" />`;
+            const input = titleDiv.querySelector('input');
+            input.focus();
+            input.select();
+            
+            const saveRename = async () => {
+                const newName = input.value.trim();
+                if (isChapter) {
+                    const chapterDiv = titleDiv.closest('.chapter');
+                    const oldName = chapterDiv.dataset.chapterName;
+                    if (newName && newName !== oldName) {
+                        const chapter = currentCourse.chapters.find(c => c.name === oldName);
+                        if(chapter) {
+                            chapter.name = newName;
+                            // Update all lectures within this chapter
+                            currentCourse.lectures.forEach(l => {
+                                if (l.chapter === oldName) {
+                                    l.chapter = newName;
+                                }
+                            });
+                            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
+                            chapterDiv.dataset.chapterName = newName;
+                        }
+                    }
+                    titleDiv.innerHTML = newName || oldName;
+                } else {
+                    const li = titleDiv.closest('li');
+                    const lectureId = li.dataset.lectureId;
+                    const lecture = currentCourse.lectures.find(l => l.id === lectureId);
+                    
+                    if (newName && newName !== lecture.displayName) {
+                        lecture.displayName = newName;
+                        await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
+                        const progress = getLectureProgress(currentCourse.id, lectureId);
+                        if (progress) {
+                            await saveLectureProgress({ ...progress, lectureName: newName, courseId: currentCourse.id, lectureId: lectureId });
+                        }
+                    }
+                    titleDiv.innerHTML = newName || lecture.displayName;
+                    titleDiv.title = (newName || lecture.displayName) + " (Double-click to rename)";
+                    li.querySelector('.status-btn').dataset.lectureName = newName || lecture.displayName;
+                }
+            };
+
+            input.addEventListener('blur', saveRename);
+            input.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') input.blur();
+                if (ev.key === 'Escape') {
+                    input.removeEventListener('blur', saveRename);
+                    titleDiv.innerHTML = originalText;
+                }
+            });
         });
 
         addPdfInput.addEventListener('change', async (e) => {
@@ -1075,7 +1328,7 @@
                 const progressData = getLectureProgress(currentCourse.id, lectureId);
                 await saveLectureProgress({ ...progressData, pdfHandle: file, pdfName: file.name, courseId: currentCourse.id, lectureId: lectureId });
                 await renderPlayer(currentCourse.id, lectureId, lastView);
-                await showMediaViewer(file, 'PDF', file.name);
+                await showMediaViewer(file, 'PDF', file.name, getLectureProgress(currentCourse.id, lectureId));
             }
             e.target.value = null;
         });
@@ -1087,7 +1340,7 @@
                 const progressData = getLectureProgress(currentCourse.id, lectureId);
                 await saveLectureProgress({ ...progressData, assignmentHandle: file, assignmentName: file.name, courseId: currentCourse.id, lectureId: lectureId });
                 await renderPlayer(currentCourse.id, lectureId, lastView);
-                await showMediaViewer(file, 'Assignment', file.name);
+                await showMediaViewer(file, 'Assignment', file.name, getLectureProgress(currentCourse.id, lectureId));
             }
             e.target.value = null;
         });
@@ -1098,8 +1351,32 @@
             switchView(lastView);
         });
 
-        collapseMediaBtn.addEventListener('click', hideMediaViewer);
+        closeViewerBtn.addEventListener('click', hideMediaViewer);
         
+        mediaViewerToggleBtn.addEventListener('click', () => {
+            const isHidden = mediaViewer.classList.contains('hidden');
+            if (isHidden) {
+                const lectureId = currentLectureLi.dataset.lectureId;
+                const progress = getLectureProgress(currentCourse.id, lectureId);
+                let fileToShow = null;
+                if (activeViewerFileType === 'pdf' && progress.pdfHandle) {
+                   fileToShow = { handle: progress.pdfHandle, type: 'PDF', name: progress.pdfName };
+                } else if (activeViewerFileType === 'assignment' && progress.assignmentHandle) {
+                   fileToShow = { handle: progress.assignmentHandle, type: 'Assignment', name: progress.assignmentName };
+                } else if (progress.pdfHandle) {
+                   fileToShow = { handle: progress.pdfHandle, type: 'PDF', name: progress.pdfName };
+                } else if (progress.assignmentHandle) {
+                   fileToShow = { handle: progress.assignmentHandle, type: 'Assignment', name: progress.assignmentName };
+                }
+
+                if(fileToShow) {
+                    showMediaViewer(fileToShow.handle, fileToShow.type, fileToShow.name, progress);
+                }
+            } else {
+                hideMediaViewer();
+            }
+        });
+
         deleteViewerFileBtn.addEventListener('click', async () => {
             const fileType = deleteViewerFileBtn.dataset.type;
             if (!currentLectureLi || !fileType) return;
@@ -1115,6 +1392,7 @@
                 }
                 await saveLectureProgress(lectureProgress);
                 hideMediaViewer();
+                updateMediaViewerToggleButton();
                 await renderPlayer(currentCourse.id, lectureId, lastView);
             }
         });
@@ -1170,11 +1448,96 @@
             sidebarToggleBtn.classList.toggle('collapsed');
         });
         
+        // --- Drag and Drop for Chapters ---
+        let draggedChapter = null;
+
+        chapterListDiv.addEventListener('dragstart', e => {
+            if (e.target.classList.contains('chapter')) {
+                draggedChapter = e.target;
+                setTimeout(() => {
+                    draggedChapter.classList.add('dragging');
+                }, 0);
+            } else {
+                e.preventDefault();
+            }
+        });
+
+        chapterListDiv.addEventListener('dragend', () => {
+            if (draggedChapter) {
+                draggedChapter.classList.remove('dragging');
+            }
+            draggedChapter = null;
+            document.querySelectorAll('.chapter-drop-indicator').forEach(el => el.remove());
+        });
+
+        chapterListDiv.addEventListener('dragover', e => {
+            e.preventDefault();
+            const container = chapterListDiv;
+            const afterElement = getDragAfterElement(container, e.clientY);
+            
+            document.querySelectorAll('.chapter-drop-indicator').forEach(el => el.remove());
+
+            const indicator = document.createElement('div');
+            indicator.className = 'chapter-drop-indicator';
+
+            if (afterElement == null) {
+                container.appendChild(indicator);
+            } else {
+                container.insertBefore(indicator, afterElement);
+            }
+        });
+        
+        chapterListDiv.addEventListener('drop', async e => {
+            e.preventDefault();
+            if (!draggedChapter) return;
+            
+            const fromName = draggedChapter.dataset.chapterName;
+            const fromIndex = currentCourse.chapters.findIndex(c => c.name === fromName);
+
+            const dropIndicator = chapterListDiv.querySelector('.chapter-drop-indicator');
+            const afterElement = dropIndicator ? dropIndicator.nextElementSibling : null;
+
+            let toIndex;
+            if (afterElement) {
+                const toName = afterElement.dataset.chapterName;
+                toIndex = currentCourse.chapters.findIndex(c => c.name === toName);
+            } else {
+                toIndex = currentCourse.chapters.length;
+            }
+
+            if (fromIndex < toIndex) { toIndex--; }
+            
+            const [movedItem] = currentCourse.chapters.splice(fromIndex, 1);
+            currentCourse.chapters.splice(toIndex, 0, movedItem);
+
+            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
+            renderChapterList(currentCourse.chapters);
+        });
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.chapter:not(.dragging)')];
+
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // --- Video Player Controls ---
+        unmuteBtn.addEventListener('click', () => {
+            videoPlayer.muted = false;
+            unmuteBtn.classList.add('hidden');
+        });
         const showSeekIcon = (overlay) => { overlay.classList.add('show-icon'); setTimeout(() => overlay.classList.remove('show-icon'), 500); };
         playPauseBtn.addEventListener('click', () => videoPlayer.paused ? videoPlayer.play() : videoPlayer.pause());
         videoPlayer.addEventListener('play', () => playPauseBtn.innerHTML = `<i class="fas fa-pause"></i>`);
         videoPlayer.addEventListener('pause', () => playPauseBtn.innerHTML = `<i class="fas fa-play"></i>`);
-        videoWrapper.addEventListener('click', (e) => { if (e.target.closest('.video-controls-container')) return; if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } clickTimer = setTimeout(() => { if (!e.target.closest('#media-viewer')) playPauseBtn.click(); }, 250); });
+        videoWrapper.addEventListener('click', (e) => { if (e.target.closest('.video-controls-container') || e.target.closest('#unmute-btn')) return; if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } clickTimer = setTimeout(() => { if (!e.target.closest('#media-viewer')) playPauseBtn.click(); }, 250); });
         videoWrapper.addEventListener('dblclick', (e) => { if (e.target.closest('.video-controls-container') || e.target.closest('#media-viewer')) return; clearTimeout(clickTimer); clickTimer = null; const r=videoWrapper.getBoundingClientRect(),c=e.clientX-r.left;if(c<r.width/2){videoPlayer.currentTime-=10;showSeekIcon(leftSeekOverlay)}else{videoPlayer.currentTime+=10;showSeekIcon(rightSeekOverlay)}});
         videoPlayer.addEventListener('timeupdate', () => { 
             const currentTime = videoPlayer.currentTime;
@@ -1201,7 +1564,7 @@
             speedBtn.textContent = `${speeds[currentSpeedIndex]}x`;
         });
         
-        document.addEventListener('keydown', (e) => { const view = document.querySelector('.view.active'); if (!view || view.id !== 'player-view' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; e.preventDefault(); switch(e.code) { case 'Space': playPauseBtn.click(); break; case 'ArrowRight': videoPlayer.currentTime += 5; break; case 'ArrowLeft': videoPlayer.currentTime -= 5; break; case 'ArrowUp': videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break; case 'ArrowDown': videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break; case 'KeyF': fullscreenBtn.click(); break; case 'Escape': if (document.fullscreenElement) document.exitFullscreen(); break; } });
+        document.addEventListener('keydown', (e) => { const view = document.querySelector('.view.active'); if (!view || view.id !== 'player-view' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; e.preventDefault(); userInteracted = true; videoPlayer.muted = false; unmuteBtn.classList.add('hidden'); switch(e.code) { case 'Space': playPauseBtn.click(); break; case 'ArrowRight': videoPlayer.currentTime += 5; break; case 'ArrowLeft': videoPlayer.currentTime -= 5; break; case 'ArrowUp': videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break; case 'ArrowDown': videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break; case 'KeyF': fullscreenBtn.click(); break; case 'Escape': if (document.fullscreenElement) document.exitFullscreen(); break; } });
         
         mediaResizeHandle.addEventListener('mousedown', (e) => { e.preventDefault(); isResizing = true; document.body.style.cursor = 'ew-resize'; playerView.style.userSelect = 'none'; });
         document.addEventListener('mousemove', (e) => {
@@ -1236,11 +1599,10 @@
                         lectureMenu.classList.add('hidden');
                         sidebarToggleBtn.classList.add('collapsed');
                     }
-                    // Find course now to avoid race conditions
                     const courseExists = courses.some(c => c.id === savedState.courseId);
                     if (courseExists) {
-                       await renderPlayer(savedState.courseId, savedState.lectureId, savedState.lastView, savedState.currentTime);
-                       return;
+                      await renderPlayer(savedState.courseId, savedState.lectureId, savedState.lastView, savedState.currentTime);
+                      return;
                     }
                 }
             }
@@ -1251,3 +1613,4 @@
     </script>
 </body>
 </html>
+
