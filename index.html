@@ -143,6 +143,7 @@
         #lecture-menu.hidden { margin-left:-380px; }
         .menu-header { padding:20px; border-bottom:1px solid var(--border-primary); background-color: var(--bg-primary); flex-shrink: 0; }
         .back-link { color:var(--accent-primary);text-decoration:none;display:block;margin-bottom:15px;font-weight:500; cursor: pointer;}
+        .back-link:hover { text-decoration: underline; }
         #chapter-list { overflow-y:auto; flex-grow:1; padding:10px; }
         .chapter-title { font-weight:bold; cursor:pointer; padding:12px; border-radius:8px; display:flex; align-items:center; gap:8px; transition: background-color 0.2s; }
         .chapter-title:hover { background-color: var(--bg-tertiary); }
@@ -324,6 +325,7 @@
         let reviewFilter = null;
         let practiceFilter = null;
         let activeStatusCard = null;
+        let lastView = 'dashboard-view'; // Added state variable
 
         // --- Utility Functions ---
         function formatTime(timeInSeconds, withHours = true) {
@@ -443,9 +445,9 @@
                     </div>
                     <div class="course-info">
                         <div>
-                           <h3 title="${course.title}">${course.title}</h3>
-                           <p class="course-meta">${course.videoCount} videos</p>
-                           ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : ''}
+                            <h3 title="${course.title}">${course.title}</h3>
+                            <p class="course-meta">${course.videoCount} videos</p>
+                            ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : ''}
                         </div>
                         <div class="course-progress-container">
                             <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${progress.percentage}%"></div></div>
@@ -493,7 +495,7 @@
                         <div class="lecture-progress-bar"><div class="lecture-progress-fill" style="width: ${progressPercent}%"></div></div>
                         <div class="lecture-review-meta"><span class="time-display">${formatTime(watchedTime)} / ${formatTime(totalTime)}</span></div>
                     </div>
-                    <button class="primary-btn play-from-status" data-course-id="${item.courseId}" data-lecture-id="${item.lectureId}"><i class="fas fa-play"></i> Play</button>`;
+                    <button class="primary-btn play-from-status" data-course-id="${item.courseId}" data-lecture-id="${item.lectureId}" data-status="${status}"><i class="fas fa-play"></i> Play</button>`;
                 grid.appendChild(card);
             });
         }
@@ -508,22 +510,31 @@
             container.querySelector('.menu-progress-text').textContent = `${progress.completed}/${progress.total} lectures completed`;
         }
 
-        async function playLectureFromAnywhere(courseId, lectureId) {
+        async function playLectureFromAnywhere(courseId, lectureId, originView = 'dashboard-view') {
+            lastView = originView; // Remember the last view
             const course = courses.find(c => c.id === parseInt(courseId));
             if (!course.isLinked) {
                 const handle = course.handle || course.handles[0];
                 if (await handle.requestPermission({ mode: 'read' }) !== 'granted') { alert('Permission denied.'); return; }
                 course.isLinked = true;
             }
-            await renderPlayer(courseId, lectureId);
+            await renderPlayer(courseId, lectureId, originView);
         }
 
-        async function renderPlayer(courseId, lectureIdToPlay = null) {
+        async function renderPlayer(courseId, lectureIdToPlay = null, originView = 'dashboard-view') {
             currentCourse = courses.find(c => c.id === parseInt(courseId));
             if (!currentCourse) return;
             switchView('player-view');
             chapterListDiv.innerHTML = '<p style="text-align:center; padding: 20px;">Loading lectures...</p>';
-            courseTitleMenu.textContent = currentCourse.title;
+            
+            // Set the back button text and data attribute
+            if (originView === 'dashboard-view') {
+                backToLibraryBtn.textContent = '← Back to Courses';
+            } else {
+                const statusName = originView.split('-')[0];
+                backToLibraryBtn.textContent = `← Back to ${statusName.charAt(0).toUpperCase() + statusName.slice(1)}`;
+            }
+            backToLibraryBtn.dataset.view = originView;
 
             if (!currentCourse.lectures) {
                 const courseData = currentCourse.handle ? await scanDirectoryHandle(currentCourse.handle) : { chapters: [], lectures: [] };
@@ -531,12 +542,25 @@
                 currentCourse.totalDuration = courseData.totalDuration;
             }
             
+            let lecturesToDisplay = currentCourse.lectures;
+            if (originView === 'review-view' || originView === 'practice-view') {
+                const status = originView.split('-')[0];
+                const statusLectures = Object.values(courseProgress)
+                    .filter(p => p.status === status && p.courseId === currentCourse.id)
+                    .map(p => p.lectureId);
+                lecturesToDisplay = currentCourse.lectures.filter(l => statusLectures.includes(l.id));
+                courseTitleMenu.textContent = `${currentCourse.title} (${status.charAt(0).toUpperCase() + status.slice(1)} Lectures)`;
+            } else {
+                courseTitleMenu.textContent = currentCourse.title;
+            }
+
+
             updateMenuProgress();
             chapterListDiv.innerHTML = '';
             let targetLi = null, firstLi = null;
 
             const chapters = {};
-            currentCourse.lectures.forEach(lec => {
+            lecturesToDisplay.forEach(lec => {
                 const chapterName = "Lectures"; // Simplified for now, can use full path later
                 if (!chapters[chapterName]) chapters[chapterName] = [];
                 chapters[chapterName].push(lec);
@@ -605,7 +629,8 @@
             if(e.target.closest('.play-from-status')) { 
                 const btn = e.target.closest('.play-from-status');
                 activeStatusCard = btn.closest('.lecture-review-card');
-                await playLectureFromAnywhere(btn.dataset.courseId, btn.dataset.lectureId); 
+                const currentViewId = document.querySelector('.view.active').id;
+                await playLectureFromAnywhere(btn.dataset.courseId, btn.dataset.lectureId, currentViewId); 
             }
             const removeBtn = e.target.closest('.remove-course-btn');
             if (removeBtn) { e.stopPropagation(); const courseId = parseInt(removeBtn.dataset.id); if (confirm('Are you sure?')) { getStore(STORE_NAME, 'readwrite').delete(courseId); await loadCoursesFromDB(); } }
@@ -667,7 +692,7 @@
         
         backToLibraryBtn.addEventListener('click', () => {
             videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
-            switchView('dashboard-view');
+            switchView(lastView); // Use the remembered lastView
         });
         
         setInterval(() => {
