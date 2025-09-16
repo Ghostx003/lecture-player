@@ -85,9 +85,8 @@
         }
         #review-grid, #practice-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, 350px);
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
             gap: 20px;
-            justify-content: center;
         }
 
         /* --- Course Card (Dashboard) --- */
@@ -95,7 +94,7 @@
             background-color: var(--bg-secondary); border-radius: 10px;
             box-shadow: var(--shadow); border: 1px solid var(--border-primary);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; 
-            display: flex; flex-direction: column; height: 320px;
+            display: flex; flex-direction: column; height: 350px; /* Increased height for new fields */
             overflow: hidden;
         }
         html[data-theme="dark"] .course-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -2px var(--accent-primary_translucent); transform: translateY(-2px); }
@@ -132,6 +131,59 @@
         .course-progress-text, .menu-progress-text { font-size: 0.75rem; color: var(--text-secondary); }
         .enter-course-btn { padding: 8px 12px; width: 100%; border: none; border-radius: 6px; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; text-decoration: none; display: block; text-align: center; background-color: var(--accent-primary); color: var(--text-on-accent); margin-top: 12px; }
         .enter-course-btn:hover { background-color: var(--accent-hover); }
+
+        .course-extra-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin: 8px 0;
+            gap: 8px;
+        }
+        .course-faculty {
+            font-weight: 500;
+            cursor: text;
+            padding: 2px 4px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .course-faculty:hover {
+            background-color: var(--bg-tertiary);
+        }
+        .course-rating {
+            display: flex;
+            flex-shrink: 0;
+        }
+        .course-rating i {
+            cursor: pointer;
+            color: var(--border-secondary); /* Default color for empty stars */
+            transition: transform 0.1s, color 0.1s;
+            padding: 0 1px;
+        }
+        .course-rating i.fas {
+            color: #f59e0b; /* Filled star color */
+        }
+        .course-rating:hover i {
+           color: #f59e0b !important;
+        }
+        .course-rating i:hover ~ i {
+            color: var(--border-secondary) !important;
+        }
+        .course-faculty-input {
+            width: 100%;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-secondary);
+            border-radius: 4px;
+            padding: 2px 4px;
+            color: var(--text-primary);
+            font-weight: 500;
+            font-size: 0.8rem;
+            box-sizing: border-box;
+        }
 
         /* --- Lecture Card (Review/Practice) --- */
         .lecture-review-card {
@@ -380,7 +432,7 @@
             right: 0;
             border-radius: 8px 0 0 8px;
         }
-       
+        
         #no-content-message { text-align: center; color: var(--text-secondary); padding: 50px; }
         .hidden { display: none !important; }
         .file-controls { display: flex; gap: 5px; align-items: center; }
@@ -733,7 +785,11 @@
                     course.chapters = courseData.chapters;
                 }
                 const progress = calculateCourseProgress(course);
-               
+
+                const ratingStarsHTML = Array.from({length: 5}, (_, i) => 
+                    `<i class="fa-star ${ (course.rating || 0) > i ? 'fas' : 'far'}" data-value="${i + 1}"></i>`
+                ).join('');
+                
                 card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" data-id="${course.id}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                         <i class="fas fa-photo-video"></i>
@@ -744,6 +800,10 @@
                     <div class="course-info">
                         <div>
                             <h3 title="${course.title}">${course.title}</h3>
+                            <div class="course-extra-info" data-id="${course.id}">
+                                <div class="course-faculty" title="Double-click to edit faculty">${course.facultyName || 'N/A Faculty'}</div>
+                                <div class="course-rating">${ratingStarsHTML}</div>
+                            </div>
                             <p class="course-meta">${course.videoCount} videos</p>
                             ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : ''}
                         </div>
@@ -892,9 +952,9 @@
              if (!chaptersToDisplay || chaptersToDisplay.length === 0 || (chaptersToDisplay.length === 1 && chaptersToDisplay[0].lectures.length === 0)) {
                 chapterListDiv.innerHTML = `<p id="no-content-message">No lectures found for this course or filter.</p>`;
                 return;
-            }
+             }
             
-            chaptersToDisplay.forEach((chapter) => {
+             chaptersToDisplay.forEach((chapter) => {
                 const chapterDiv = document.createElement('div');
                 chapterDiv.className = 'chapter open';
                 chapterDiv.dataset.chapterName = chapter.name;
@@ -1195,6 +1255,63 @@
                 }
                 dropdown.classList.add('hidden');
             }
+        });
+
+        courseGrid.addEventListener('dblclick', (e) => {
+            const facultyDiv = e.target.closest('.course-faculty');
+            if (!facultyDiv || facultyDiv.querySelector('input')) return;
+            
+            const originalText = facultyDiv.textContent;
+            facultyDiv.innerHTML = `<input type="text" class="course-faculty-input" value="${originalText === 'N/A Faculty' ? '' : originalText}" />`;
+            const input = facultyDiv.querySelector('input');
+            input.focus();
+            input.select();
+            
+            const saveFacultyName = async () => {
+                const courseId = parseInt(facultyDiv.parentElement.dataset.id);
+                const course = courses.find(c => c.id === courseId);
+                if (!course) return;
+
+                const newName = input.value.trim();
+                facultyDiv.textContent = newName || 'N/A Faculty';
+                
+                if (newName !== (course.facultyName || '')) {
+                     course.facultyName = newName || null;
+                     await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                }
+            };
+            
+            input.addEventListener('blur', saveFacultyName);
+            input.addEventListener('keydown', (ev) => {
+                if (ev.key === 'Enter') input.blur();
+                if (ev.key === 'Escape') {
+                    input.removeEventListener('blur', saveFacultyName);
+                    facultyDiv.textContent = originalText;
+                }
+            });
+        });
+
+        courseGrid.addEventListener('click', async (e) => {
+            const star = e.target.closest('.course-rating i.fa-star');
+            if (!star) return;
+
+            const ratingContainer = star.parentElement;
+            const courseId = parseInt(ratingContainer.parentElement.dataset.id);
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            const newRating = parseInt(star.dataset.value);
+            // If the user clicks the same star value again, toggle it off (set rating to 0)
+            course.rating = (course.rating === newRating) ? 0 : newRating; 
+
+            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+            
+            // Re-render just the stars for this card
+            const allStars = ratingContainer.querySelectorAll('i');
+            allStars.forEach((s, i) => {
+                s.classList.toggle('fas', course.rating > i);
+                s.classList.toggle('far', course.rating <= i);
+            });
         });
 
         chapterListDiv.addEventListener('click', async (e) => {
@@ -1613,4 +1730,3 @@
     </script>
 </body>
 </html>
-
