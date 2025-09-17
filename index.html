@@ -15,6 +15,7 @@
             --border-primary: #e5e7eb; --border-secondary: #d1d5db; --accent-danger: #ef4444;
             --status-review: #f59e0b; --status-practice: #3b82f6;
             --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --dpp-doubt: #9333ea; --dpp-fail: #ef4444; --dpp-solved: #3b82f6; --dpp-star: #f59e0b;
         }
         html[data-theme="dark"] {
             --bg-primary: #000000; --bg-secondary: #121212; --bg-tertiary: #1E1E1E;
@@ -71,7 +72,7 @@
 
         /* --- GRIDS --- */
         .grid-container { overflow-y: auto; flex-grow: 1; padding: 24px; }
-        #course-grid, #upload-course-grid {
+        #course-grid, #upload-course-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;
         }
         #review-grid, #practice-grid {
@@ -108,8 +109,10 @@
         .course-card:hover .remove-course-btn, .course-card:hover .refresh-course-btn { opacity: 1; }
         .course-card:hover .thumbnail-placeholder.has-thumbnail .remove-thumbnail-btn { opacity: 1; display: flex; }
         .course-info { padding: 12px 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .upload-card-actions { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
         .course-info h3 { margin: 0 0 4px 0; font-size: 1rem; line-height: 1.3; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: text; }
         .course-info-input { width: 100%; font-size: 1rem; font-weight: 600; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); }
+        html[data-theme="dark"] .course-info-input { color: var(--text-primary); }
         .course-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px 0; }
         .course-duration { font-size: 0.75rem; color: var(--accent-primary); margin-bottom: 8px; font-weight: 500; }
         .course-progress-container { margin-top: auto; }
@@ -150,10 +153,7 @@
 
         /* --- VIEW HEADER --- */
         .view-header { padding: 12px 24px; border-bottom: 1px solid var(--border-primary); display: flex; align-items: center; gap: 1rem; position: relative; }
-        .filter-dropdown { position: absolute; top: 100%; left: 24px; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px; box-shadow: var(--shadow); z-index: 20; max-height: 300px; overflow-y: auto; }
-        .filter-dropdown a { display: block; padding: 10px 15px; text-decoration: none; color: var(--text-primary); cursor: pointer; }
-        .filter-dropdown a:hover { background-color: var(--bg-tertiary); }
-
+        
         /* --- MODALS --- */
         .modal-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.7); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 1rem; }
         .modal-overlay.hidden { display: none !important; }
@@ -204,8 +204,10 @@
         #lecture-menu { width:380px; background-color:var(--bg-secondary); border-right:1px solid var(--border-primary); flex-shrink:0; display:flex; flex-direction:column; transition:margin-left 0.3s ease; }
         #lecture-menu.hidden { margin-left:-380px; }
         .menu-header { padding:20px; border-bottom:1px solid var(--border-primary); background-color: var(--bg-primary); flex-shrink: 0; }
-        .back-link { color:var(--accent-primary);text-decoration:none;display:block;margin-bottom:15px;font-weight:500; cursor: pointer;}
+        .menu-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
+        .back-link { color:var(--accent-primary);text-decoration:none;display:block;font-weight:500; cursor: pointer; flex-shrink: 0; }
         .back-link:hover { text-decoration: underline; }
+        .clear-bookmarks-btn { background: none; border: 1px solid var(--accent-danger); color: var(--accent-danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 6px; cursor: pointer; font-weight: 600; }
         #chapter-list { overflow-y:auto; flex-grow:1; padding:10px; }
         .chapter-title { font-weight:bold; cursor:pointer; padding:12px; border-radius:8px; display:flex; align-items:center; gap:8px; transition: background-color 0.2s; position: relative;}
         .chapter-title:hover { background-color: var(--bg-tertiary); }
@@ -267,8 +269,8 @@
         @keyframes fade-out { from { opacity: 0.8; } to { opacity: 0; } }
         .video-controls-container { position:absolute;bottom:0;left:0;width:100%;padding:0 15px;z-index:20;opacity:0;transition:opacity 0.2s ease-in-out;background:linear-gradient(to top, rgba(0,0,0,0.7), transparent);}
         #video-wrapper:hover .video-controls-container { opacity:1; }
-        .timeline-container { padding: 10px 0; }
-        .timeline { -webkit-appearance:none; appearance:none; background:rgba(255,255,255,0.3); cursor:pointer; height:8px; width:100%; border-radius:5px; transition: height 0.2s ease; }
+        .timeline-container { padding: 10px 0; position: relative; }
+        .timeline { -webkit-appearance:none; appearance:none; background:rgba(255,255,255,0.3); cursor:pointer; height:8px; width:100%; border-radius:5px; transition: height 0.2s ease; margin: 0; padding: 0;}
         .timeline:hover { height: 12px; }
         .timeline::-webkit-slider-thumb{ -webkit-appearance:none; appearance:none; height:18px; width:18px; border-radius:50%; background-color:var(--accent-primary); border: 3px solid white; box-shadow: 0 0 5px rgba(0,0,0,0.5); transition: transform 0.2s ease, box-shadow 0.2s ease; opacity: 0; }
         .timeline-container:hover .timeline::-webkit-slider-thumb { opacity: 1; transform: scale(1.1); }
@@ -282,12 +284,77 @@
         #sidebar-toggle-btn.collapsed i { transform:rotate(180deg); }
         #media-viewer-toggle-btn { position: absolute; top: 50%; transform: translateY(-50%); z-index: 55; background: var(--accent-primary); color: white; border: none; width: 25px; height: 70px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: opacity 0.3s ease, right 0.3s ease; right: 0; border-radius: 8px 0 0 8px; }
         
+        /* --- BOOKMARKS --- */
+        #bookmarks-container { position: absolute; top: 0; left: 0; right: 0; height: 100%; pointer-events: none; }
+        .bookmark-dot {
+            position: absolute; top: 50%; transform: translate(-50%, -50%);
+            width: 12px; height: 12px; background-color: #f59e0b;
+            border: 2px solid white; border-radius: 50%; cursor: pointer;
+            pointer-events: all; z-index: 10; transition: transform 0.2s;
+        }
+        .bookmark-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
+
         #no-content-message { text-align: center; color: var(--text-secondary); padding: 50px; }
         .hidden { display: none !important; }
         .file-controls { display: flex; gap: 5px; align-items: center; }
         .file-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; width: 24px; height: 24px; font-size: 1rem; display: flex; align-items: center; justify-content: center; position: relative; }
         .file-btn:hover { color: var(--accent-primary); }
         #add-pdf-input, #add-assignment-input { display: none; }
+        
+        /* --- DPP & NOTES VIEW --- */
+        #dpp-view, #notes-view { flex-direction: column; }
+        #dpp-detail-container, #notes-detail-container { flex-grow: 1; display: flex; flex-direction: row; }
+        #dpp-sidebar, #notes-sidebar { width: 380px; background-color: var(--bg-secondary); border-right: 1px solid var(--border-primary); flex-shrink: 0; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        #dpp-sidebar.hidden, #notes-sidebar.hidden { margin-left: -380px; }
+        #dpp-sidebar-header, #notes-sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-primary); }
+        #dpp-list-container, #notes-list-container { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        .dpp-course-group h3, .notes-course-group h3 { padding: 12px; margin: 0; font-size: 1.1rem; }
+        .dpp-folder-group, .notes-folder-group { padding-left: 15px; }
+        .dpp-folder-title, .notes-folder-title { font-weight: bold; padding: 8px 12px; color: var(--text-secondary); font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px;}
+        .dpp-folder-title i, .notes-folder-title i { transition: transform 0.2s ease-in-out; }
+        .dpp-folder-group.open .dpp-folder-title i, .notes-folder-group.open .notes-folder-title i { transform: rotate(90deg); }
+        .dpp-list, .notes-list { padding-left: 10px; display: none; }
+        .dpp-folder-group.open .dpp-list, .notes-folder-group.open .notes-list { display: block; }
+
+        .dpp-item, .notes-item { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .dpp-item:hover, .notes-item:hover { background-color: var(--bg-tertiary); }
+        .dpp-item.active, .notes-item.active { background-color: var(--accent-primary); color: var(--text-on-accent); }
+        .dpp-item-title, .notes-item-title { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .dpp-item-title.completed { text-decoration: line-through; opacity: 0.6; }
+        .dpp-item-controls { display: flex; align-items: center; gap: 4px; }
+        .dpp-item-btn { width: 24px; height: 24px; font-size: 0.9rem; color: var(--text-secondary); }
+        .dpp-item-btn.completed { color: var(--accent-primary); }
+        .dpp-item-btn.starred { color: var(--dpp-star); }
+        .dpp-item-btn.delete-dpp-btn:hover { color: var(--accent-danger); }
+        .dpp-status-btn { font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; min-width: 50px; text-align: center; }
+        .dpp-status-btn.doubt { background-color: var(--dpp-doubt); color: white; }
+        .dpp-status-btn.fail { background-color: var(--dpp-fail); color: white; }
+        .dpp-status-btn.solved { background-color: var(--dpp-solved); color: white; }
+        #dpp-content-area, #notes-content-area { flex-grow: 1; position: relative; }
+        #dpp-viewer-frame, #notes-viewer-frame { width: 100%; height: 100%; border: none; }
+        #dpp-sidebar-toggle-btn, #notes-sidebar-toggle-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 1001; background: var(--accent-primary); color: white; border: none; width: 25px; height: 70px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; left: 380px; border-radius: 0 8px 8px 0; }
+        #dpp-sidebar-toggle-btn.collapsed, #notes-sidebar-toggle-btn.collapsed { left: 0; }
+        #dpp-sidebar-toggle-btn i, #notes-sidebar-toggle-btn i { transition: transform 0.3s; }
+        #dpp-sidebar-toggle-btn.collapsed i, #notes-sidebar-toggle-btn.collapsed i { transform: rotate(180deg); }
+
+        /* --- DPP UPLOAD VIEW --- */
+        #dpp-upload-view { flex-direction: row; }
+        #dpp-upload-sidebar { width: 380px; background-color: var(--bg-secondary); border-right: 1px solid var(--border-primary); flex-shrink: 0; display: flex; flex-direction: column; transition: margin-left 0.3s ease;}
+        #dpp-upload-sidebar.hidden { margin-left: -380px; }
+        #dpp-upload-header { padding: 1rem; border-bottom: 1px solid var(--border-primary); }
+        #dpp-upload-header h3 { margin: 0 0 0.5rem 0; }
+        #dpp-folder-list { flex-grow: 1; overflow-y: auto; padding: 0.5rem; }
+        .dpp-folder-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-radius: 8px; cursor: pointer; transition: background-color 0.2s; }
+        .dpp-folder-item:hover { background-color: var(--bg-tertiary); }
+        .dpp-folder-item.selected { background-color: var(--accent-primary); color: var(--text-on-accent); }
+        .delete-dpp-folder-btn { color: var(--text-secondary); }
+        .delete-dpp-folder-btn:hover { color: var(--accent-danger); }
+        #dpp-upload-drop-zone { flex-grow: 1; margin: 2rem; }
+        #dpp-upload-sidebar-toggle-btn { position: fixed; top: 50%; transform: translateY(-50%); z-index: 1001; background: var(--accent-primary); color: white; border: none; width: 25px; height: 70px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.3s ease; left: 380px; border-radius: 0 8px 8px 0; }
+        #dpp-upload-sidebar-toggle-btn.collapsed { left: 0; }
+        #dpp-upload-sidebar-toggle-btn i { transition: transform 0.3s; }
+        #dpp-upload-sidebar-toggle-btn.collapsed i { transform: rotate(180deg); }
+
     </style>
 </head>
 <body>
@@ -299,6 +366,8 @@
             <a href="#" class="nav-link" data-view="upload-view">Upload</a>
             <a href="#" class="nav-link" data-view="review-view">Review</a>
             <a href="#" class="nav-link" data-view="practice-view">Practice</a>
+            <a href="#" class="nav-link" data-view="dpp-view">DPP</a>
+            <a href="#" class="nav-link" data-view="notes-view">Notes</a>
         </div>
         <div id="total-time-left-display" class="info-display"></div>
         <button id="add-course-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Course</button>
@@ -313,15 +382,15 @@
         <div id="upload-detail-view" class="hidden">
             <div id="upload-lecture-list-container">
                 <div id="upload-lecture-list-header">
-                       <a class="back-link" id="back-to-upload-grid">&larr; Back to Courses</a>
-                       <h3 id="upload-course-title"></h3>
+                        <a class="back-link" id="back-to-upload-grid">&larr; Back to Courses</a>
+                        <h3 id="upload-course-title"></h3>
                 </div>
                 <div id="upload-lecture-list"></div>
             </div>
             <div id="upload-drop-zones">
                 <div class="drop-zone" id="pdf-drop-zone" data-type="pdf">
                     <i class="fas fa-file-pdf"></i>
-                    <h4>Notes (PDF)</h4>
+                    <h4>Lecture Notes (PDF)</h4>
                     <p>Drag & Drop a PDF Here</p>
                 </div>
                 <div class="drop-zone" id="assignment-drop-zone" data-type="assignment">
@@ -333,10 +402,33 @@
         </div>
     </div>
 
+    <div id="filter-results-view" class="view">
+        <!-- This will be populated dynamically -->
+    </div>
+
+    <div id="dpp-upload-view" class="view">
+        <div id="dpp-upload-sidebar">
+            <div id="dpp-upload-header">
+                <a class="back-link" id="back-to-upload-from-dpp">&larr; Back to Upload</a>
+                <h3 id="dpp-upload-course-title"></h3>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="new-dpp-folder-name" placeholder="New folder name..." style="width: 100%;" class="course-info-input">
+                    <button id="add-dpp-folder-btn" class="primary-btn"><i class="fas fa-plus"></i></button>
+                </div>
+            </div>
+            <div id="dpp-folder-list"></div>
+        </div>
+        <div id="dpp-upload-drop-zone" class="drop-zone">
+            <i class="fas fa-file-upload"></i>
+            <h4>Upload DPPs</h4>
+            <p>Drag & Drop Files Here</p>
+        </div>
+        <button id="dpp-upload-sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
+    </div>
+
     <div id="review-view" class="view">
         <div class="view-header">
             <button class="primary-btn" id="filter-btn-review"><i class="fas fa-filter"></i> Filter by Course</button>
-            <div id="filter-dropdown-review" class="filter-dropdown hidden"></div>
         </div>
         <main id="review-grid" class="grid-container"></main>
     </div>
@@ -344,15 +436,53 @@
     <div id="practice-view" class="view">
         <div class="view-header">
             <button class="primary-btn" id="filter-btn-practice"><i class="fas fa-filter"></i> Filter by Course</button>
-            <div id="filter-dropdown-practice" class="filter-dropdown hidden"></div>
         </div>
         <main id="practice-grid" class="grid-container"></main>
+    </div>
+    
+    <div id="dpp-view" class="view">
+        <main id="dpp-course-grid" class="grid-container"></main>
+        <div id="dpp-detail-container" class="hidden">
+            <div id="dpp-sidebar">
+                <div id="dpp-sidebar-header">
+                    <a class="back-link" id="back-to-dpp-grid" style="margin-bottom: 1rem;">&larr; Back to Courses</a>
+                    <h2 id="dpp-detail-course-title">DPP Library</h2>
+                </div>
+                <div id="dpp-list-container"></div>
+            </div>
+            <div id="dpp-content-area">
+                <iframe id="dpp-viewer-frame"></iframe>
+                <p id="dpp-no-content-message" style="text-align: center; color: var(--text-secondary); padding: 50px;">Select a DPP from the sidebar to view it.</p>
+            </div>
+            <button id="dpp-sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
+        </div>
+    </div>
+
+    <div id="notes-view" class="view">
+        <main id="notes-course-grid" class="grid-container"></main>
+        <div id="notes-detail-container" class="hidden">
+            <div id="notes-sidebar">
+                <div id="notes-sidebar-header">
+                    <a class="back-link" id="back-to-notes-grid" style="margin-bottom: 1rem;">&larr; Back to Courses</a>
+                    <h2 id="notes-detail-course-title">Class Notes</h2>
+                </div>
+                <div id="notes-list-container"></div>
+            </div>
+            <div id="notes-content-area">
+                <iframe id="notes-viewer-frame"></iframe>
+                <p id="notes-no-content-message" style="text-align: center; color: var(--text-secondary); padding: 50px;">Select a note from the sidebar to view it.</p>
+            </div>
+            <button id="notes-sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
+        </div>
     </div>
 
     <div id="player-view" class="view">
         <div id="lecture-menu">
             <div class="menu-header">
-                <a class="back-link">&larr; Back to Courses</a>
+                <div class="menu-header-top">
+                    <a class="back-link">&larr; Back to Courses</a>
+                    <button class="clear-bookmarks-btn hidden">Clear Bookmarks</button>
+                </div>
                 <h2 id="course-title-menu"></h2>
                 <div class="course-stats"></div>
                 <div class="menu-progress-container">
@@ -372,7 +502,10 @@
                     <div class="seek-overlay" id="left-seek-overlay"><i class="fas fa-backward"></i></div>
                     <div class="seek-overlay" id="right-seek-overlay"><i class="fas fa-forward"></i></div>
                     <div class="video-controls-container">
-                        <div class="timeline-container"><input type="range" class="timeline" value="0" step="0.1"></div>
+                        <div class="timeline-container">
+                            <input type="range" class="timeline" value="0" step="0.1">
+                            <div id="bookmarks-container"></div>
+                        </div>
                         <div class="controls">
                             <div class="left-controls">
                                 <button class="control-btn" id="play-pause-btn"><i class="fas fa-play"></i></button>
@@ -428,9 +561,10 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const DB_NAME = 'CourseFlixDB';
-        const DB_VERSION = 8;
+        const DB_VERSION = 9; // Incremented version for new object store
         const STORE_NAME = 'courses';
         const PROGRESS_STORE = 'progress';
+        const DPP_STORE = 'dpps'; // New store for DPPs
         let db;
 
         // --- Database Helper ---
@@ -443,6 +577,7 @@
                     const db = event.target.result;
                     if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
                     if (!db.objectStoreNames.contains(PROGRESS_STORE)) db.createObjectStore(PROGRESS_STORE, { keyPath: 'id' });
+                    if (!db.objectStoreNames.contains(DPP_STORE)) db.createObjectStore(DPP_STORE, { keyPath: 'id', autoIncrement: true });
                 };
             });
         }
@@ -482,15 +617,14 @@
         const totalTimeDisplay = document.getElementById('total-time-left-display');
         const closeViewerBtn = document.getElementById('close-viewer-btn');
         const importZipInput = document.getElementById('import-zip-input');
+        const bookmarksContainer = document.getElementById('bookmarks-container');
+        const clearBookmarksBtn = document.querySelector('.clear-bookmarks-btn');
 
         let courses = [];
         let currentCourse = null;
         let currentLectureLi = null;
         let courseProgress = {};
         let clickTimer = null;
-        let reviewFilter = null;
-        let practiceFilter = null;
-        let activeStatusCard = null;
         let lastView = 'dashboard-view';
         let activeFileUrl = null;
         let activeViewerFileType = null;
@@ -594,14 +728,22 @@
 
         // --- View Switching & Rendering ---
         function switchView(viewId) {
-            activeStatusCard = null; 
-            nav.classList.toggle('hidden', viewId === 'player-view');
+            nav.classList.toggle('hidden', ['player-view', 'dpp-upload-view', 'filter-results-view'].includes(viewId));
+            
             views.forEach(view => view.classList.toggle('active', view.id === viewId));
             navLinks.forEach(link => link.classList.toggle('active', link.dataset.view === viewId));
-            if (viewId === 'review-view') renderStatusView('review', reviewFilter);
-            if (viewId === 'practice-view') renderStatusView('practice', practiceFilter);
+            
+            if (viewId === 'review-view' || viewId === 'practice-view') {
+                renderStatusGrid(viewId.split('-')[0]);
+            }
             if (viewId === 'dashboard-view') renderCourseGrid();
-            if (viewId === 'upload-view') renderUploadView();
+            if (viewId === 'upload-view') {
+                 document.getElementById('upload-course-grid').classList.remove('hidden');
+                 document.getElementById('upload-detail-view').classList.add('hidden');
+                 renderUploadView();
+            }
+            if (viewId === 'dpp-view') renderDppCourseSelectionView();
+            if (viewId === 'notes-view') renderNotesCourseSelectionView();
             
             if (viewId !== 'player-view') {
                 sessionStorage.removeItem('courseflixState');
@@ -732,22 +874,58 @@
             }
         }
 
-        function renderStatusView(status, filter = null) {
-            const grid = status === 'review' ? reviewGrid : practiceGrid;
-            const dropdown = document.getElementById(`filter-dropdown-${status}`);
+        function showFilteredCoursesView(status) {
+            const filterResultsView = document.getElementById('filter-results-view');
             const allItems = Object.values(courseProgress).filter(p => p.status === status);
+            const courseIdsWithStatus = [...new Set(allItems.map(item => item.courseId))];
+            const coursesToShow = courses.filter(c => courseIdsWithStatus.includes(c.id));
             
-            const courseTitles = [...new Set(allItems.map(item => item.courseTitle))];
-            dropdown.innerHTML = '<a>All Courses</a>';
-            courseTitles.sort().forEach(title => {
-                dropdown.innerHTML += `<a data-course-title="${title}">${title}</a>`;
-            });
+            let header = `
+                <div class="view-header">
+                    <button class="primary-btn" id="back-to-status-view-btn" data-view="${status}-view"><i class="fas fa-arrow-left"></i> Back to ${status.charAt(0).toUpperCase() + status.slice(1)}</button>
+                </div>
+                <main id="filter-results-grid" class="grid-container"></main>
+            `;
+            filterResultsView.innerHTML = header;
 
-            const items = allItems.filter(p => !filter || p.courseTitle === filter);
+            const grid = filterResultsView.querySelector('#filter-results-grid');
+            if (coursesToShow.length === 0) {
+                grid.innerHTML = `<p id="no-content-message">No courses have lectures marked for ${status}.</p>`;
+            } else {
+                coursesToShow.forEach(course => {
+                    const progress = calculateCourseProgress(course);
+                    const card = document.createElement('div');
+                    card.className = 'course-card';
+                    card.dataset.courseIdFilter = course.id;
+                    card.dataset.statusFilter = status;
+                    card.style.cursor = 'pointer';
+                    card.innerHTML = `
+                         <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
+                             <i class="fas fa-photo-video"></i>
+                         </div>
+                         <div class="course-info" style="padding: 12px;">
+                             <h3>${course.title}</h3>
+                             <div class="course-progress-container">
+                                 <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${progress.percentage}%"></div></div>
+                                 <div class="course-progress-text">${progress.completed} / ${progress.total || course.videoCount || 0} completed</div>
+                             </div>
+                         </div>`;
+                    grid.appendChild(card);
+                });
+            }
+            switchView('filter-results-view');
+        }
+
+        function renderStatusGrid(status, filter = null) {
+            const grid = status === 'review' ? reviewGrid : practiceGrid;
+            const allItems = Object.values(courseProgress).filter(p => p.status === status);
+            const items = allItems.filter(p => !filter || p.courseId === filter);
             
             grid.innerHTML = '';
             if (items.length === 0) {
-                const message = filter ? `No lectures for "${filter}" marked for ${status}.` : `You haven't marked any lectures for ${status}.`;
+                const message = filter 
+                    ? `No lectures for the selected course are marked for ${status}.` 
+                    : `You haven't marked any lectures for ${status}.`;
                 grid.innerHTML = `<p id="no-content-message">${message}</p>`; 
                 return;
             }
@@ -786,10 +964,7 @@
         // --- Upload View ---
         function renderUploadView() {
             const grid = document.getElementById('upload-course-grid');
-            const detailView = document.getElementById('upload-detail-view');
             grid.innerHTML = '';
-            grid.classList.remove('hidden');
-            detailView.classList.add('hidden');
             
             if (courses.length === 0) { 
                 grid.innerHTML = `<p id="no-content-message">No courses to upload files to. Add a course first.</p>`;
@@ -797,58 +972,72 @@
             }
             courses.forEach(course => {
                 const card = document.createElement('div');
-                card.className = 'course-card'; // Reuse styling
-                card.style.cursor = 'pointer';
+                card.className = 'course-card'; 
                 card.dataset.courseId = course.id;
                  card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
-                        <i class="fas fa-file-upload"></i>
+                         <i class="fas fa-file-upload"></i>
                     </div>
                     <div class="course-info">
                         <h3>${course.title}</h3>
                         <p class="course-meta">${course.videoCount || 0} videos</p>
+                    </div>
+                    <div class="upload-card-actions">
+                         <button class="primary-btn upload-notes-btn" data-id="${course.id}"><i class="fas fa-file-alt"></i> Upload Lecture Files</button>
+                         <button class="primary-btn upload-dpp-btn" data-id="${course.id}"><i class="fas fa-file-invoice"></i> Upload DPPs</button>
                     </div>`;
                 grid.appendChild(card);
             });
         }
         
-        async function renderUploadDetailView(courseId) {
-             const course = courses.find(c => c.id === courseId);
-             if (!course) return;
+        async function renderLectureUploadDetail(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) {
+                showToast("Could not find course data.", true);
+                return;
+            }
 
-             if (course.isLinked && course.handle && !course.lectures) {
-                await refreshCourse(course.id, null);
-             }
-             if (!course.lectures) {
-                 showToast("Could not load lectures for this course.", true);
-                 return;
-             }
+            if (course.isLinked && course.handle && !course.lectures) {
+               await refreshCourse(course.id, null);
+            }
+            if (!course.lectures) {
+                showToast("Could not load lectures for this course.", true);
+                return;
+            }
 
-             document.getElementById('upload-course-grid').classList.add('hidden');
-             const detailView = document.getElementById('upload-detail-view');
-             detailView.classList.remove('hidden');
-             detailView.dataset.courseId = courseId;
+            document.getElementById('upload-course-grid').classList.add('hidden');
+            const detailView = document.getElementById('upload-detail-view');
+            detailView.classList.remove('hidden');
+            detailView.dataset.courseId = courseId;
 
-             document.getElementById('upload-course-title').textContent = course.title;
-             const list = document.getElementById('upload-lecture-list');
-             list.innerHTML = '';
-             
-             let lectures = [];
-             course.chapters.forEach(ch => lectures.push(...ch.lectures));
+            document.getElementById('upload-course-title').textContent = course.title;
+            const list = document.getElementById('upload-lecture-list');
+            list.innerHTML = '';
+            
+            let lectures = [];
+            course.chapters.forEach(ch => lectures.push(...ch.lectures));
 
-             lectures.forEach(lecture => {
-                 const progress = getLectureProgress(course.id, lecture.id);
-                 const item = document.createElement('div');
-                 item.className = 'lecture-item';
-                 item.dataset.lectureId = lecture.id;
-                 item.innerHTML = `
-                     <span>${lecture.displayName}</span>
-                     <div class="file-status">
-                         ${progress.pdfHandle ? '<i class="fas fa-file-pdf" title="Notes added"></i>' : ''}
-                         ${progress.assignmentHandle ? '<i class="fas fa-file-alt" title="Assignment added"></i>' : ''}
-                     </div>`;
-                 list.appendChild(item);
-             });
+            lectures.forEach(lecture => {
+                const progress = getLectureProgress(course.id, lecture.id);
+                const item = document.createElement('div');
+                item.className = 'lecture-item';
+                item.dataset.lectureId = lecture.id;
+                item.innerHTML = `
+                    <span>${lecture.displayName}</span>
+                    <div class="file-status">
+                        ${progress.pdfHandle ? '<i class="fas fa-file-pdf" title="Notes added"></i>' : ''}
+                        ${progress.assignmentHandle ? '<i class="fas fa-file-alt" title="Assignment added"></i>' : ''}
+                    </div>`;
+                list.appendChild(item);
+            });
+            
+            // Add click listeners for selection
+            list.querySelectorAll('.lecture-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    list.querySelectorAll('.lecture-item.selected').forEach(sel => sel.classList.remove('selected'));
+                    item.classList.add('selected');
+                });
+            });
         }
 
 
@@ -914,14 +1103,16 @@
                     .filter(p => p.status === status && p.courseId === currentCourse.id)
                     .map(p => p.lectureId);
 
-                chaptersToDisplay = currentCourse.chapters.map(chapter => {
-                    const filteredLectures = chapter.lectures.filter(l => statusLectures.includes(l.id));
-                    return { ...chapter, lectures: filteredLectures };
+                chaptersToDisplay = JSON.parse(JSON.stringify(currentCourse.chapters)).map(chapter => {
+                    chapter.lectures = chapter.lectures.filter(l => statusLectures.includes(l.id));
+                    return chapter;
                 }).filter(chapter => chapter.lectures.length > 0);
                 
                 courseTitleMenu.textContent = `${currentCourse.title} (${status.charAt(0).toUpperCase() + status.slice(1)} Lectures)`;
+                clearBookmarksBtn.classList.add('hidden');
             } else {
                 courseTitleMenu.textContent = currentCourse.title;
+                clearBookmarksBtn.classList.remove('hidden');
             }
 
             updateMenuProgress();
@@ -989,6 +1180,13 @@
         }
 
         async function playVideo(liElement, startTime = null) {
+            if (currentLectureLi) { // Save last played info before switching
+                const lastLectureId = currentLectureLi.dataset.lectureId;
+                if (lastLectureId !== liElement.dataset.lectureId) {
+                    currentCourse.lastPlayedLecture = { lectureId: lastLectureId, currentTime: videoPlayer.currentTime };
+                    await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
+                }
+            }
             if (currentLectureLi) currentLectureLi.classList.remove('active');
             currentLectureLi = liElement;
             currentLectureLi.classList.add('active');
@@ -1005,6 +1203,7 @@
                 videoPlayer.load();
 
                 videoPlayer.addEventListener('loadeddata', async () => {
+                    renderBookmarks();
                     let timeToSet = startTime;
                     if (timeToSet === null) {
                         const progress = getLectureProgress(currentCourse.id, lecture.id);
@@ -1091,37 +1290,38 @@
 
                 let blobToView = file; 
 
-                // --- BUG FIX STARTS HERE ---
-                // If the file is an 'assignment', we know it's a PDF.
-                // Re-create the blob with an explicit MIME type to fix potential
-                // type information loss during IndexedDB storage.
-                if (fileType.toLowerCase() === 'assignment') {
+                if (fileType.toLowerCase() === 'assignment' || fileType.toLowerCase() === 'dpp' || fileType.toLowerCase() === 'note') {
                     blobToView = new Blob([file], { type: 'application/pdf' });
                 }
-                // --- BUG FIX ENDS HERE ---
 
                 activeFileUrl = URL.createObjectURL(blobToView);
-                mediaViewerFrame.src = activeFileUrl;
-
-                viewerTitle.textContent = fileName || file.name;
-                activeViewerFileType = fileType.toLowerCase();
                 
-                updateFileSwitcher(lectureProgress, activeViewerFileType);
-
-                const preferredWidth = localStorage.getItem('viewerWidth') || '500px';
-                playerView.style.setProperty('--viewer-width', preferredWidth);
-                mediaViewer.style.width = preferredWidth;
-                playerView.classList.add('viewer-active');
-                mediaViewer.classList.remove('hidden');
-                
-                mediaViewerToggleBtn.classList.add('hidden');
-
-                deleteViewerFileBtn.dataset.type = activeViewerFileType;
-                deleteViewerFileBtn.classList.add('visible');
+                if (fileType.toLowerCase() === 'dpp') {
+                    document.getElementById('dpp-viewer-frame').src = activeFileUrl;
+                    document.getElementById('dpp-no-content-message').classList.add('hidden');
+                } else if (fileType.toLowerCase() === 'note') {
+                    document.getElementById('notes-viewer-frame').src = activeFileUrl;
+                    document.getElementById('notes-no-content-message').classList.add('hidden');
+                } else {
+                    mediaViewerFrame.src = activeFileUrl;
+                    viewerTitle.textContent = fileName || file.name;
+                    activeViewerFileType = fileType.toLowerCase();
+                    updateFileSwitcher(lectureProgress, activeViewerFileType);
+                    const preferredWidth = localStorage.getItem('viewerWidth') || '500px';
+                    playerView.style.setProperty('--viewer-width', preferredWidth);
+                    mediaViewer.style.width = preferredWidth;
+                    playerView.classList.add('viewer-active');
+                    mediaViewer.classList.remove('hidden');
+                    mediaViewerToggleBtn.classList.add('hidden');
+                    deleteViewerFileBtn.dataset.type = activeViewerFileType;
+                    deleteViewerFileBtn.classList.add('visible');
+                }
             } catch (error) {
                 console.error("Error showing file:", error);
                 showToast("Failed to open file. Please try re-adding it.", true);
-                hideMediaViewer();
+                if (fileType.toLowerCase() !== 'dpp' && fileType.toLowerCase() !== 'note') {
+                    hideMediaViewer();
+                }
             }
         }
 
@@ -1140,7 +1340,7 @@
                 container.innerHTML = `
                     <button id="file-switcher-btn">${currentType.toUpperCase()} <i class="fas fa-chevron-down fa-xs"></i></button>
                     <div id="file-switcher-dropdown" class="hidden">
-                         <button data-type="${otherType}">${otherType === 'pdf' ? 'View Notes' : 'View Assignment'}</button>
+                        <button data-type="${otherType}">${otherType === 'pdf' ? 'View Notes' : 'View Assignment'}</button>
                     </div>`;
 
                 const btn = container.querySelector('#file-switcher-btn');
@@ -1196,11 +1396,24 @@
             
             const reviewCard = e.target.closest('#review-grid .lecture-review-card, #practice-grid .lecture-review-card');
             if (reviewCard && !e.target.closest('.remove-status-btn')) {
-                activeStatusCard = reviewCard;
                 const currentViewId = document.querySelector('.view.active').id;
                 await playLectureFromAnywhere(reviewCard.dataset.courseId, reviewCard.dataset.lectureId, currentViewId);
                 return;
             }
+            
+            const filterResultsCard = e.target.closest('#filter-results-view .course-card');
+            if (filterResultsCard) {
+                e.preventDefault();
+                const courseId = parseInt(filterResultsCard.dataset.courseIdFilter);
+                const status = filterResultsCard.dataset.statusFilter;
+                await playLectureFromAnywhere(courseId, null, `${status}-view`);
+            }
+            
+            const backToStatusBtn = e.target.closest('#back-to-status-view-btn');
+            if(backToStatusBtn) {
+                switchView(backToStatusBtn.dataset.view);
+            }
+
 
             const removeStatusBtn = e.target.closest('.remove-status-btn');
             if (removeStatusBtn) {
@@ -1214,9 +1427,9 @@
                     await saveLectureProgress(progress);
                     const activeView = document.querySelector('.view.active');
                     if (activeView.id === 'review-view') {
-                        renderStatusView('review', reviewFilter);
+                        renderStatusGrid('review');
                     } else if (activeView.id === 'practice-view') {
-                        renderStatusView('practice', practiceFilter);
+                        renderStatusGrid('practice');
                     }
                 }
             }
@@ -1228,28 +1441,48 @@
             if (refreshBtn) { e.stopPropagation(); const courseId = parseInt(refreshBtn.dataset.id); await refreshCourse(courseId, refreshBtn); }
             
             const thumbPlaceholder = e.target.closest('.thumbnail-placeholder');
-            if (thumbPlaceholder && !removeBtn && !refreshBtn && !e.target.closest('.remove-thumbnail-btn')) { document.getElementById('thumbnail-uploader').dataset.courseId = thumbPlaceholder.dataset.id; document.getElementById('thumbnail-uploader').click(); }
+            if (thumbPlaceholder && !removeBtn && !refreshBtn && !e.target.closest('.remove-thumbnail-btn') && !e.target.closest('.upload-notes-btn') && !e.target.closest('.upload-dpp-btn')) { document.getElementById('thumbnail-uploader').dataset.courseId = thumbPlaceholder.dataset.id; document.getElementById('thumbnail-uploader').click(); }
             if (e.target.closest('.remove-thumbnail-btn')) { e.stopPropagation(); const btn = e.target.closest('.remove-thumbnail-btn'); const course = courses.find(c => c.id === parseInt(btn.dataset.id)); if (course) { delete course.thumbnail; getStore(STORE_NAME, 'readwrite').put(course); renderCourseGrid(); } }
             
             const filterBtnReview = e.target.closest('#filter-btn-review');
-            if(filterBtnReview) document.getElementById('filter-dropdown-review').classList.toggle('hidden');
+            if(filterBtnReview) showFilteredCoursesView('review');
             const filterBtnPractice = e.target.closest('#filter-btn-practice');
-            if(filterBtnPractice) document.getElementById('filter-dropdown-practice').classList.toggle('hidden');
-            
-            const filterLink = e.target.closest('.filter-dropdown a');
-            if(filterLink) {
-                e.preventDefault();
-                const title = filterLink.dataset.courseTitle;
-                const dropdown = filterLink.parentElement;
-                if (dropdown.id.includes('review')) {
-                    reviewFilter = title;
-                    renderStatusView('review', reviewFilter);
-                } else {
-                    practiceFilter = title;
-                    renderStatusView('practice', practiceFilter);
-                }
-                dropdown.classList.add('hidden');
+            if(filterBtnPractice) showFilteredCoursesView('practice');
+
+            const uploadNotesBtn = e.target.closest('.upload-notes-btn');
+            if (uploadNotesBtn) {
+                const courseId = parseInt(uploadNotesBtn.dataset.id);
+                document.getElementById('upload-course-grid').classList.add('hidden');
+                document.getElementById('upload-detail-view').classList.remove('hidden');
+                await renderLectureUploadDetail(courseId);
             }
+
+            const uploadDppBtn = e.target.closest('.upload-dpp-btn');
+            if (uploadDppBtn) {
+                const courseId = parseInt(uploadDppBtn.dataset.id);
+                switchView('dpp-upload-view');
+                await renderDppUploadView(courseId);
+            }
+
+            const dppCourseCard = e.target.closest('#dpp-course-grid .course-card .enter-course-btn');
+            if(dppCourseCard) {
+                const courseId = parseInt(dppCourseCard.closest('.course-card').dataset.courseId);
+                await renderDppDetailView(courseId);
+            }
+            if(e.target.closest('#back-to-dpp-grid')) {
+                renderDppCourseSelectionView();
+            }
+
+            const notesCourseCard = e.target.closest('#notes-course-grid .course-card .enter-course-btn');
+            if(notesCourseCard) {
+                const courseId = parseInt(notesCourseCard.closest('.course-card').dataset.courseId);
+                await renderNotesDetailView(courseId);
+            }
+             if(e.target.closest('#back-to-notes-grid')) {
+                renderNotesCourseSelectionView();
+            }
+
+
         });
         
         // --- Edit Title/Faculty Listeners ---
@@ -1258,69 +1491,69 @@
             const facultyDiv = e.target.closest('.course-faculty');
 
             if (titleH3) {
-                 const courseCard = titleH3.closest('.course-card');
-                 if (!courseCard || titleH3.querySelector('input')) return;
-                 
-                 const originalText = titleH3.textContent;
-                 titleH3.innerHTML = `<input type="text" class="course-info-input" value="${originalText}" />`;
-                 const input = titleH3.querySelector('input');
-                 input.focus();
-                 input.select();
+                const courseCard = titleH3.closest('.course-card');
+                if (!courseCard || titleH3.querySelector('input')) return;
+                
+                const originalText = titleH3.textContent;
+                titleH3.innerHTML = `<input type="text" class="course-info-input" value="${originalText}" />`;
+                const input = titleH3.querySelector('input');
+                input.focus();
+                input.select();
 
-                 const saveTitle = async () => {
-                     const courseId = parseInt(courseCard.querySelector('.thumbnail-placeholder').dataset.id);
-                     const course = courses.find(c => c.id === courseId);
-                     if (!course) return;
+                const saveTitle = async () => {
+                    const courseId = parseInt(courseCard.querySelector('.thumbnail-placeholder').dataset.id);
+                    const course = courses.find(c => c.id === courseId);
+                    if (!course) return;
 
-                     const newTitle = input.value.trim();
-                     titleH3.textContent = newTitle || originalText;
-                     titleH3.title = (newTitle || originalText) + " (Double-click to edit)";
-                     
-                     if (newTitle && newTitle !== course.title) {
-                         course.title = newTitle;
-                         await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
-                     }
-                 };
-                 input.addEventListener('blur', saveTitle);
-                 input.addEventListener('keydown', (ev) => {
-                     if (ev.key === 'Enter') input.blur();
-                     if (ev.key === 'Escape') {
-                         input.removeEventListener('blur', saveTitle);
-                         titleH3.textContent = originalText;
-                     }
-                 });
+                    const newTitle = input.value.trim();
+                    titleH3.textContent = newTitle || originalText;
+                    titleH3.title = (newTitle || originalText) + " (Double-click to edit)";
+                    
+                    if (newTitle && newTitle !== course.title) {
+                        course.title = newTitle;
+                        await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                    }
+                };
+                input.addEventListener('blur', saveTitle);
+                input.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') input.blur();
+                    if (ev.key === 'Escape') {
+                        input.removeEventListener('blur', saveTitle);
+                        titleH3.textContent = originalText;
+                    }
+                });
 
             } else if (facultyDiv) {
-                 if (facultyDiv.querySelector('input')) return;
+                if (facultyDiv.querySelector('input')) return;
             
-                 const originalText = facultyDiv.textContent;
-                 facultyDiv.innerHTML = `<input type="text" class="course-faculty-input" value="${originalText === 'N/A Faculty' ? '' : originalText}" />`;
-                 const input = facultyDiv.querySelector('input');
-                 input.focus();
-                 input.select();
+                const originalText = facultyDiv.textContent;
+                facultyDiv.innerHTML = `<input type="text" class="course-faculty-input" value="${originalText === 'N/A Faculty' ? '' : originalText}" />`;
+                const input = facultyDiv.querySelector('input');
+                input.focus();
+                input.select();
             
-                 const saveFacultyName = async () => {
-                     const courseId = parseInt(facultyDiv.parentElement.dataset.id);
-                     const course = courses.find(c => c.id === courseId);
-                     if (!course) return;
+                const saveFacultyName = async () => {
+                    const courseId = parseInt(facultyDiv.parentElement.dataset.id);
+                    const course = courses.find(c => c.id === courseId);
+                    if (!course) return;
 
-                     const newName = input.value.trim();
-                     facultyDiv.textContent = newName || 'N/A Faculty';
-                     
+                    const newName = input.value.trim();
+                    facultyDiv.textContent = newName || 'N/A Faculty';
+                    
                      if (newName !== (course.facultyName || '')) {
-                          course.facultyName = newName || null;
-                          await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                         course.facultyName = newName || null;
+                         await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
                      }
-                 };
-                 
-                 input.addEventListener('blur', saveFacultyName);
-                 input.addEventListener('keydown', (ev) => {
-                     if (ev.key === 'Enter') input.blur();
-                     if (ev.key === 'Escape') {
-                         input.removeEventListener('blur', saveFacultyName);
-                         facultyDiv.textContent = originalText;
-                     }
-                 });
+                };
+                
+                input.addEventListener('blur', saveFacultyName);
+                input.addEventListener('keydown', (ev) => {
+                    if (ev.key === 'Enter') input.blur();
+                    if (ev.key === 'Escape') {
+                        input.removeEventListener('blur', saveFacultyName);
+                        facultyDiv.textContent = originalText;
+                    }
+                });
             }
         });
 
@@ -1344,82 +1577,6 @@
                 s.classList.toggle('far', course.rating <= i);
             });
         });
-
-        // --- Upload View Listeners ---
-        document.getElementById('upload-course-grid').addEventListener('click', (e) => {
-            const card = e.target.closest('.course-card');
-            if (card) {
-                const courseId = parseInt(card.dataset.courseId);
-                renderUploadDetailView(courseId);
-            }
-        });
-        document.getElementById('back-to-upload-grid').addEventListener('click', () => {
-            document.getElementById('upload-course-grid').classList.remove('hidden');
-            document.getElementById('upload-detail-view').classList.add('hidden');
-        });
-        document.getElementById('upload-lecture-list').addEventListener('click', (e) => {
-            const item = e.target.closest('.lecture-item');
-            if (item) {
-                const currentlySelected = document.querySelector('#upload-lecture-list .lecture-item.selected');
-                if (currentlySelected) currentlySelected.classList.remove('selected');
-                item.classList.add('selected');
-            }
-        });
-        ['pdf-drop-zone', 'assignment-drop-zone'].forEach(id => {
-            const dropZone = document.getElementById(id);
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
-            dropZone.addEventListener('drop', async (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                
-                const selectedLectureEl = document.querySelector('#upload-lecture-list .lecture-item.selected');
-                if (!selectedLectureEl) {
-                    showToast("Please select a lecture first.", true);
-                    return;
-                }
-
-                const file = e.dataTransfer.files[0];
-                if (!file) return;
-
-                const courseId = parseInt(document.getElementById('upload-detail-view').dataset.courseId);
-                const lectureId = selectedLectureEl.dataset.lectureId;
-                const type = dropZone.dataset.type;
-
-                const progressData = getLectureProgress(courseId, lectureId);
-                const saveData = {
-                    ...progressData,
-                    courseId,
-                    lectureId
-                };
-                
-                if (type === 'pdf') {
-                    if(!file.type.includes('pdf')) return showToast("Only PDF files are allowed for notes.", true);
-                    saveData.pdfHandle = file;
-                    saveData.pdfName = file.name;
-                } else {
-                    saveData.assignmentHandle = file;
-                    saveData.assignmentName = file.name;
-                    saveData.assignmentType = file.type;
-                }
-
-                await saveLectureProgress(saveData);
-                showToast(`${type.charAt(0).toUpperCase() + type.slice(1)} uploaded successfully!`);
-
-                // Update UI to show file status
-                const fileStatusDiv = selectedLectureEl.querySelector('.file-status');
-                const iconClass = type === 'pdf' ? 'fa-file-pdf' : 'fa-file-alt';
-                if (!fileStatusDiv.querySelector(`.${iconClass}`)) {
-                    fileStatusDiv.innerHTML += `<i class="fas ${iconClass}" title="${type.charAt(0).toUpperCase() + type.slice(1)} added"></i>`;
-                }
-            });
-        });
-
 
         // --- Player View Listeners ---
         chapterListDiv.addEventListener('click', async (e) => {
@@ -1570,7 +1727,12 @@
         backToLibraryBtn.addEventListener('click', () => {
             videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
             hideMediaViewer();
-            switchView(lastView);
+            const targetView = backToLibraryBtn.dataset.view || 'dashboard-view';
+            if (targetView.includes('review') || targetView.includes('practice')) {
+                showFilteredCoursesView(targetView.split('-')[0]);
+            } else {
+                switchView(targetView);
+            }
         });
 
         closeViewerBtn.addEventListener('click', hideMediaViewer);
@@ -1832,10 +1994,25 @@
                     serializableProgress.push(cleanProgress);
                 }
 
+                // Export DPPs
+                const allDpps = await new Promise(r => getStore(DPP_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+                const serializableDpps = [];
+                for (const dpp of allDpps) {
+                    const cleanDpp = {...dpp};
+                    if (dpp.fileHandle) {
+                        const dppFilename = `dpp_${dpp.id}_${dpp.fileName}`;
+                        zip.folder('dpps').file(dppFilename, dpp.fileHandle);
+                        cleanDpp.dppFilename = dppFilename;
+                    }
+                    delete cleanDpp.fileHandle;
+                    serializableDpps.push(cleanDpp);
+                }
+
                 const backupData = {
                     courses: serializableCourses,
                     progress: serializableProgress,
-                    version: 1,
+                    dpps: serializableDpps,
+                    version: 2,
                     exportedAt: new Date().toISOString()
                 };
 
@@ -1973,7 +2150,8 @@
             try {
                 await Promise.all([
                     new Promise(r => getStore(STORE_NAME, 'readwrite').clear().onsuccess = r),
-                    new Promise(r => getStore(PROGRESS_STORE, 'readwrite').clear().onsuccess = r)
+                    new Promise(r => getStore(PROGRESS_STORE, 'readwrite').clear().onsuccess = r),
+                    new Promise(r => getStore(DPP_STORE, 'readwrite').clear().onsuccess = r)
                 ]);
 
                 for (const course of backupData.courses) {
@@ -2008,6 +2186,21 @@
                     await new Promise(r => getStore(PROGRESS_STORE, 'readwrite').put(newProgress).onsuccess = r);
                 }
 
+                if (backupData.dpps) {
+                    for (const dpp of backupData.dpps) {
+                        statusMsg.textContent = `Importing DPPs...`;
+                        const newDpp = { ...dpp };
+                        if (dpp.dppFilename) {
+                            const dppFile = zip.file(`dpps/${dpp.dppFilename}`);
+                            if (dppFile) {
+                                const blob = await dppFile.async('blob');
+                                newDpp.fileHandle = new File([blob], dpp.fileName, { type: 'application/pdf' });
+                            }
+                        }
+                        await new Promise(r => getStore(DPP_STORE, 'readwrite').put(newDpp).onsuccess = r);
+                    }
+                }
+
                 statusMsg.textContent = 'Import complete! Reloading...';
                 showToast("Import successful! Your library has been restored.");
                 
@@ -2035,7 +2228,7 @@
         playPauseBtn.addEventListener('click', () => videoPlayer.paused ? videoPlayer.play() : videoPlayer.pause());
         videoPlayer.addEventListener('play', () => playPauseBtn.innerHTML = `<i class="fas fa-pause"></i>`);
         videoPlayer.addEventListener('pause', () => playPauseBtn.innerHTML = `<i class="fas fa-play"></i>`);
-        videoWrapper.addEventListener('click', (e) => { if (e.target.closest('.video-controls-container') || e.target.closest('#unmute-btn')) return; if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } clickTimer = setTimeout(() => { if (!e.target.closest('#media-viewer')) playPauseBtn.click(); }, 250); });
+        videoWrapper.addEventListener('click', (e) => { if (e.target.closest('.video-controls-container') || e.target.closest('#unmute-btn') || e.target.closest('.bookmark-dot')) return; if (clickTimer) { clearTimeout(clickTimer); clickTimer = null; } clickTimer = setTimeout(() => { if (!e.target.closest('#media-viewer')) playPauseBtn.click(); }, 250); });
         videoWrapper.addEventListener('dblclick', (e) => { if (e.target.closest('.video-controls-container') || e.target.closest('#media-viewer')) return; clearTimeout(clickTimer); clickTimer = null; const r=videoWrapper.getBoundingClientRect(),c=e.clientX-r.left;if(c<r.width/2){videoPlayer.currentTime-=10;showSeekIcon(leftSeekOverlay)}else{videoPlayer.currentTime+=10;showSeekIcon(rightSeekOverlay)}});
         videoPlayer.addEventListener('timeupdate', () => { 
             const currentTime = videoPlayer.currentTime;
@@ -2045,10 +2238,6 @@
                 timeline.value = currentTime; 
                 const p = (currentTime / duration) * 100; 
                 timeline.style.background = `linear-gradient(to right, var(--accent-primary) ${p}%, rgba(255, 255, 255, 0.3) ${p}%)`;
-                if(activeStatusCard) {
-                    activeStatusCard.querySelector('.lecture-progress-fill').style.width = `${p}%`;
-                    activeStatusCard.querySelector('.time-display').textContent = `${formatTime(currentTime)} / ${formatTime(duration)}`;
-                }
             } 
         });
         videoPlayer.addEventListener('loadedmetadata', () => { document.getElementById('video-duration').textContent = formatTime(videoPlayer.duration); timeline.max = videoPlayer.duration; });
@@ -2062,7 +2251,62 @@
             speedBtn.textContent = `${speeds[currentSpeedIndex]}x`;
         });
         
-        document.addEventListener('keydown', (e) => { const view = document.querySelector('.view.active'); if (!view || view.id !== 'player-view' || e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; e.preventDefault(); userInteracted = true; videoPlayer.muted = false; unmuteBtn.classList.add('hidden'); switch(e.code) { case 'Space': playPauseBtn.click(); break; case 'ArrowRight': videoPlayer.currentTime += 5; break; case 'ArrowLeft': videoPlayer.currentTime -= 5; break; case 'ArrowUp': videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break; case 'ArrowDown': videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break; case 'KeyF': fullscreenBtn.click(); break; case 'Escape': if (document.fullscreenElement) document.exitFullscreen(); break; } });
+        document.addEventListener('keydown', (e) => { 
+            const activeModal = document.querySelector('.modal-overlay:not(.hidden)');
+            if (activeModal) {
+                 if (e.key === 'Escape') {
+                     activeModal.classList.add('hidden');
+                }
+                return;
+            }
+
+            const activeInput = document.querySelector('input:focus, textarea:focus');
+             if (activeInput) {
+                 if (e.key === 'Escape') {
+                     activeInput.blur();
+                 }
+                 return; 
+             }
+
+            const view = document.querySelector('.view.active'); 
+            if (!view || !['player-view', 'dpp-view', 'notes-view'].includes(view.id)) return;
+            
+            userInteracted = true; 
+            videoPlayer.muted = false; 
+            unmuteBtn.classList.add('hidden'); 
+
+            let shouldPreventDefault = true;
+            switch(e.key) { 
+                case ' ': if (view.id === 'player-view') playPauseBtn.click(); break;
+                case 'ArrowRight': if (view.id === 'player-view') videoPlayer.currentTime += 5; break;
+                case 'ArrowLeft': if (view.id === 'player-view') videoPlayer.currentTime -= 5; break; 
+                case 'ArrowUp': if (view.id === 'player-view') videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break;
+                case 'ArrowDown': if (view.id === 'player-view') videoPlayer.volume = Math.max(0, videoPlayer.volume - 0.1); break;
+                case ']': if (view.id === 'player-view') speedBtn.click(); break;
+                case '[': 
+                    if (view.id === 'player-view') {
+                        currentSpeedIndex = (currentSpeedIndex - 2 + speeds.length) % speeds.length;
+                        speedBtn.click();
+                    }
+                    break;
+                case 'f': if (view.id === 'player-view') fullscreenBtn.click(); break;
+                case 'Escape': 
+                    if (document.fullscreenElement) {
+                         document.exitFullscreen();
+                    } else if (view.id === 'player-view' && !lectureMenu.classList.contains('hidden')) {
+                        sidebarToggleBtn.click();
+                    } else if (view.id === 'dpp-view' && !document.getElementById('dpp-sidebar').classList.contains('hidden')) {
+                        document.getElementById('dpp-sidebar-toggle-btn').click();
+                    } else if (view.id === 'notes-view' && !document.getElementById('notes-sidebar').classList.contains('hidden')) {
+                        document.getElementById('notes-sidebar-toggle-btn').click();
+                    }
+                    break; 
+                case 'b': if (view.id === 'player-view') addBookmark(); break;
+                case 'c': if (view.id === 'player-view') clearCurrentVideoBookmarks(); break;
+                default: shouldPreventDefault = false; break;
+            } 
+            if (shouldPreventDefault) e.preventDefault();
+        });
         
         mediaResizeHandle.addEventListener('mousedown', (e) => { e.preventDefault(); isResizing = true; document.body.style.cursor = 'ew-resize'; playerView.style.userSelect = 'none'; });
         document.addEventListener('mousemove', (e) => {
@@ -2083,6 +2327,568 @@
             }
         });
 
+        // --- Bookmark Functions ---
+        function renderBookmarks() {
+            bookmarksContainer.innerHTML = '';
+            if (!currentCourse || !currentLectureLi || isNaN(videoPlayer.duration)) return;
+
+            const lectureId = currentLectureLi.dataset.lectureId;
+            const progress = getLectureProgress(currentCourse.id, lectureId);
+            const bookmarks = progress.bookmarks || [];
+
+            bookmarks.forEach(time => {
+                const dot = document.createElement('div');
+                dot.className = 'bookmark-dot';
+                dot.style.left = `${(time / videoPlayer.duration) * 100}%`;
+                dot.title = `Bookmark at ${formatTime(time)}`;
+                dot.onclick = (e) => {
+                    e.stopPropagation();
+                    videoPlayer.currentTime = time;
+                };
+                bookmarksContainer.appendChild(dot);
+            });
+        }
+
+        async function addBookmark() {
+            if (!currentCourse || !currentLectureLi || videoPlayer.seeking) return;
+            const lectureId = currentLectureLi.dataset.lectureId;
+            const progress = getLectureProgress(currentCourse.id, lectureId);
+            const bookmarks = progress.bookmarks || [];
+            const currentTime = videoPlayer.currentTime;
+
+            if (!bookmarks.some(b => Math.abs(b - currentTime) < 1)) { // Avoid duplicate bookmarks
+                bookmarks.push(currentTime);
+                bookmarks.sort((a, b) => a - b);
+                await saveLectureProgress({ ...progress, courseId: currentCourse.id, lectureId, bookmarks });
+                renderBookmarks();
+                showToast(`Bookmark added at ${formatTime(currentTime)}`);
+            }
+        }
+
+        async function clearCurrentVideoBookmarks() {
+            if (!currentCourse || !currentLectureLi) return;
+             if (confirm('Are you sure you want to clear all bookmarks for this video?')) {
+                const lectureId = currentLectureLi.dataset.lectureId;
+                const progress = getLectureProgress(currentCourse.id, lectureId);
+                await saveLectureProgress({ ...progress, courseId: currentCourse.id, lectureId, bookmarks: [] });
+                renderBookmarks();
+                showToast('Bookmarks cleared for this video.');
+            }
+        }
+        
+        clearBookmarksBtn.addEventListener('click', async () => {
+             if (!currentCourse) return;
+             if (confirm(`Are you sure you want to clear ALL bookmarks for the course "${currentCourse.title}"? This cannot be undone.`)) {
+                 for (const lecture of currentCourse.lectures) {
+                     const progress = getLectureProgress(currentCourse.id, lecture.id);
+                     if (progress.bookmarks && progress.bookmarks.length > 0) {
+                         progress.bookmarks = [];
+                         await saveLectureProgress(progress);
+                     }
+                 }
+                 renderBookmarks(); // Clear for current video
+                 showToast(`All bookmarks for "${currentCourse.title}" have been cleared.`);
+             }
+        });
+
+        // --- DPP Functions ---
+        async function renderDppCourseSelectionView() {
+            nav.classList.remove('hidden');
+            const dppCourseGrid = document.getElementById('dpp-course-grid');
+            document.getElementById('dpp-detail-container').classList.add('hidden');
+            dppCourseGrid.classList.remove('hidden');
+
+            const allDpps = await new Promise(r => getStore(DPP_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+            const courseIdsWithDpps = [...new Set(allDpps.map(dpp => dpp.courseId))];
+            const coursesWithDpps = courses.filter(c => courseIdsWithDpps.includes(c.id));
+
+            dppCourseGrid.innerHTML = '';
+            if (coursesWithDpps.length === 0) {
+                dppCourseGrid.innerHTML = `<p id="no-content-message">No DPPs uploaded for any course yet. Go to the Upload tab to add some.</p>`;
+                return;
+            }
+
+            coursesWithDpps.forEach(course => {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.dataset.courseId = course.id;
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
+                        <i class="fas fa-file-invoice" style="font-size: 3rem;"></i>
+                    </div>
+                    <div class="course-info">
+                        <h3>${course.title}</h3>
+                        <p class="course-meta">${allDpps.filter(d => d.courseId === course.id).length} DPPs</p>
+                        <button class="enter-course-btn" style="margin-top: auto;">View DPPs</button>
+                    </div>`;
+                dppCourseGrid.appendChild(card);
+            });
+        }
+
+
+        async function renderDppDetailView(courseId) {
+            nav.classList.add('hidden');
+            const course = courses.find(c => c.id === courseId);
+            if (!course) {
+                showToast("Error: Course not found.", true);
+                switchView('dpp-view'); // Go back to course selection
+                return;
+            };
+
+            document.getElementById('dpp-course-grid').classList.add('hidden');
+            const detailContainer = document.getElementById('dpp-detail-container');
+            detailContainer.dataset.courseId = courseId;
+            detailContainer.classList.remove('hidden');
+            
+            document.getElementById('dpp-detail-course-title').textContent = course.title;
+            const dppListContainer = document.getElementById('dpp-list-container');
+            const allDpps = await new Promise(r => getStore(DPP_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+            const courseDpps = allDpps.filter(dpp => dpp.courseId === courseId);
+
+            if (courseDpps.length === 0) {
+                dppListContainer.innerHTML = `<p id="no-content-message">No DPPs uploaded for this course yet.</p>`;
+                return;
+            }
+
+            const groupedByFolder = courseDpps.reduce((acc, dpp) => {
+                const folder = dpp.folderName || 'Uncategorized';
+                (acc[folder] = acc[folder] || []).push(dpp);
+                return acc;
+            }, {});
+
+            let html = '';
+            const sortedFolders = Object.keys(groupedByFolder).sort();
+
+            for (const folderName of sortedFolders) {
+                html += `<div class="dpp-folder-group open">`; // Start open by default
+                if (folderName !== 'Uncategorized') {
+                     html += `<div class="dpp-folder-title"><i class="fas fa-chevron-right"></i> <span>${folderName}</span></div>`;
+                }
+                
+                html += `<div class="dpp-list">`;
+                groupedByFolder[folderName].sort((a,b) => naturalSort({name: a.fileName}, {name: b.fileName})).forEach(dpp => {
+                    const statusClass = dpp.status || '';
+                    html += `
+                        <div class="dpp-item" data-dpp-id="${dpp.id}">
+                            <span class="dpp-item-title ${dpp.completed ? 'completed' : ''}">${dpp.fileName}</span>
+                            <div class="dpp-item-controls">
+                                <button class="file-btn dpp-item-btn dpp-status-btn ${statusClass}" title="Cycle Status">${dpp.status ? dpp.status.toUpperCase() : 'STATUS'}</button>
+                                <button class="file-btn dpp-item-btn star-dpp-btn ${dpp.starred ? 'starred' : ''}" title="Star DPP"><i class="fas fa-star"></i></button>
+                                <button class="file-btn dpp-item-btn complete-dpp-btn ${dpp.completed ? 'completed' : ''}" title="Mark as Complete"><i class="fas fa-check"></i></button>
+                                <button class="file-btn dpp-item-btn delete-dpp-btn" title="Delete DPP"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += `</div></div>`;
+            }
+            dppListContainer.innerHTML = html;
+        }
+
+
+        async function renderDppUploadView(courseId) {
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            const view = document.getElementById('dpp-upload-view');
+            view.dataset.courseId = courseId;
+
+            document.getElementById('dpp-upload-course-title').textContent = course.title;
+            const folderList = document.getElementById('dpp-folder-list');
+
+            let folderHTML = `<div class="dpp-folder-item selected" data-folder-name="">
+                <span><i class="fas fa-folder"></i> No Folder (Root)</span>
+            </div>`;
+
+            if (course.dppFolders && course.dppFolders.length > 0) {
+                folderHTML += course.dppFolders.sort().map(folder => `
+                    <div class="dpp-folder-item" data-folder-name="${folder}">
+                        <span><i class="fas fa-folder"></i> ${folder}</span>
+                        <button class="file-btn delete-dpp-folder-btn" title="Delete folder" data-folder-name="${folder}"><i class="fas fa-trash"></i></button>
+                    </div>
+                `).join('');
+            }
+            folderList.innerHTML = folderHTML;
+
+            folderList.querySelectorAll('.dpp-folder-item').forEach(item => {
+                item.addEventListener('click', (e) => {
+                    if (e.target.closest('.delete-dpp-folder-btn')) return;
+                    folderList.querySelectorAll('.dpp-folder-item').forEach(i => i.classList.remove('selected'));
+                    item.classList.add('selected');
+                });
+            });
+        }
+        
+        async function addDppFolder(courseId, folderName) {
+            folderName = folderName.trim();
+            if (!folderName) {
+                showToast("Folder name cannot be empty.", true);
+                return;
+            }
+            const course = courses.find(c => c.id === courseId);
+            if (!course) return;
+
+            if (!course.dppFolders) course.dppFolders = [];
+            if (course.dppFolders.includes(folderName)) {
+                showToast(`Folder "${folderName}" already exists.`, true);
+                return;
+            }
+
+            course.dppFolders.push(folderName);
+            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+            await renderDppUploadView(courseId);
+        }
+
+        async function deleteDppFolder(courseId, folderName) {
+            if (!confirm(`Are you sure you want to delete the folder "${folderName}"? DPPs inside will be moved to the root.`)) return;
+            
+            const course = courses.find(c => c.id === courseId);
+            if (!course || !course.dppFolders) return;
+            
+            course.dppFolders = course.dppFolders.filter(f => f !== folderName);
+            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+
+            const allDpps = await new Promise(r => getStore(DPP_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+            const dppsToUpdate = allDpps.filter(dpp => dpp.courseId === courseId && dpp.folderName === folderName);
+            
+            const tx = db.transaction(DPP_STORE, 'readwrite');
+            const store = tx.objectStore(DPP_STORE);
+            for(const dpp of dppsToUpdate) {
+                dpp.folderName = ''; // Move to root
+                store.put(dpp);
+            }
+            await new Promise(r => tx.oncomplete = r);
+            await renderDppUploadView(courseId);
+        }
+
+        // --- DPP & Upload Listeners ---
+        document.getElementById('back-to-upload-from-dpp').addEventListener('click', () => switchView('upload-view'));
+        document.getElementById('back-to-upload-grid').addEventListener('click', () => switchView('upload-view'));
+
+        
+        const dppSidebarToggleBtn = document.getElementById('dpp-sidebar-toggle-btn');
+        dppSidebarToggleBtn.addEventListener('click', () => {
+            document.getElementById('dpp-sidebar').classList.toggle('hidden');
+            dppSidebarToggleBtn.classList.toggle('collapsed');
+        });
+
+        const dppUploadSidebarToggleBtn = document.getElementById('dpp-upload-sidebar-toggle-btn');
+        dppUploadSidebarToggleBtn.addEventListener('click', () => {
+            document.getElementById('dpp-upload-sidebar').classList.toggle('hidden');
+            dppUploadSidebarToggleBtn.classList.toggle('collapsed');
+        });
+
+        const newDppFolderNameInput = document.getElementById('new-dpp-folder-name');
+        const addDppFolderBtn = document.getElementById('add-dpp-folder-btn');
+        const dppFolderList = document.getElementById('dpp-folder-list');
+
+        const handleAddDppFolder = async () => {
+            const courseId = parseInt(document.getElementById('dpp-upload-view').dataset.courseId);
+            const folderName = newDppFolderNameInput.value;
+            if (folderName && courseId) {
+                await addDppFolder(courseId, folderName);
+                newDppFolderNameInput.value = '';
+            }
+        };
+
+        addDppFolderBtn.addEventListener('click', handleAddDppFolder);
+        newDppFolderNameInput.addEventListener('keydown', e => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddDppFolder();
+            }
+        });
+
+        dppFolderList.addEventListener('click', e => {
+            const deleteBtn = e.target.closest('.delete-dpp-folder-btn');
+            if (deleteBtn) {
+                e.stopPropagation();
+                const courseId = parseInt(document.getElementById('dpp-upload-view').dataset.courseId);
+                const folderName = deleteBtn.dataset.folderName;
+                deleteDppFolder(courseId, folderName);
+            }
+        });
+        
+        const dppDropZone = document.getElementById('dpp-upload-drop-zone');
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dppDropZone.addEventListener(eventName, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        dppDropZone.addEventListener('dragenter', () => dppDropZone.classList.add('dragover'));
+        dppDropZone.addEventListener('dragover', () => dppDropZone.classList.add('dragover'));
+        dppDropZone.addEventListener('dragleave', () => dppDropZone.classList.remove('dragover'));
+        dppDropZone.addEventListener('drop', async (e) => {
+            dppDropZone.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (!files || files.length === 0) return;
+
+            const courseId = parseInt(document.getElementById('dpp-upload-view').dataset.courseId);
+            const selectedFolderEl = document.querySelector('#dpp-folder-list .dpp-folder-item.selected');
+            const folderName = selectedFolderEl ? selectedFolderEl.dataset.folderName : '';
+
+            const tx = db.transaction(DPP_STORE, 'readwrite');
+            const store = tx.objectStore(DPP_STORE);
+            let uploadedCount = 0;
+
+            for (const file of files) {
+                const dpp = {
+                    courseId: courseId,
+                    folderName: folderName,
+                    fileName: file.name.replace(/\.[^/.]+$/, ""),
+                    fileHandle: file,
+                    completed: false,
+                    starred: false,
+                    status: null
+                };
+                store.add(dpp);
+                uploadedCount++;
+            }
+            await new Promise(r => tx.oncomplete = r);
+            
+            if(uploadedCount > 0) {
+                showToast(`${uploadedCount} DPP(s) uploaded successfully!`);
+            }
+        });
+
+        document.getElementById('dpp-list-container').addEventListener('click', async (e) => {
+            const folderTitle = e.target.closest('.dpp-folder-title');
+            if (folderTitle) {
+                e.stopPropagation();
+                folderTitle.parentElement.classList.toggle('open');
+                return;
+            }
+
+            const dppItem = e.target.closest('.dpp-item');
+            if (!dppItem) return;
+            
+            const dppId = parseInt(dppItem.dataset.dppId);
+            const dpp = await new Promise(r => getStore(DPP_STORE, 'readonly').get(dppId).onsuccess = e => r(e.target.result));
+            if (!dpp) return;
+
+            // Handle button clicks
+            if (e.target.closest('.delete-dpp-btn')) {
+                e.stopPropagation();
+                if (confirm(`Are you sure you want to delete the DPP "${dpp.fileName}"?`)) {
+                    await new Promise(r => getStore(DPP_STORE, 'readwrite').delete(dppId).onsuccess = r);
+                    const courseId = parseInt(document.getElementById('dpp-detail-container').dataset.courseId);
+                    await renderDppDetailView(courseId);
+                }
+            } else if (e.target.closest('.complete-dpp-btn')) {
+                e.stopPropagation();
+                dpp.completed = !dpp.completed;
+                await new Promise(r => getStore(DPP_STORE, 'readwrite').put(dpp).onsuccess = r);
+                e.target.closest('.complete-dpp-btn').classList.toggle('completed', dpp.completed);
+                dppItem.querySelector('.dpp-item-title').classList.toggle('completed', dpp.completed);
+            } else if (e.target.closest('.star-dpp-btn')) {
+                e.stopPropagation();
+                dpp.starred = !dpp.starred;
+                await new Promise(r => getStore(DPP_STORE, 'readwrite').put(dpp).onsuccess = r);
+                e.target.closest('.star-dpp-btn').classList.toggle('starred', dpp.starred);
+            } else if (e.target.closest('.dpp-status-btn')) {
+                e.stopPropagation();
+                const statuses = [null, 'doubt', 'fail', 'solved'];
+                const currentIndex = statuses.indexOf(dpp.status);
+                const nextIndex = (currentIndex + 1) % statuses.length;
+                dpp.status = statuses[nextIndex];
+                await new Promise(r => getStore(DPP_STORE, 'readwrite').put(dpp).onsuccess = r);
+                
+                const btn = e.target.closest('.dpp-status-btn');
+                btn.className = 'file-btn dpp-item-btn dpp-status-btn'; // reset classes
+                if (dpp.status) {
+                    btn.classList.add(dpp.status);
+                    btn.textContent = dpp.status.toUpperCase();
+                } else {
+                    btn.textContent = 'STATUS';
+                }
+            } else { // Click on the item itself to view
+                document.querySelectorAll('#dpp-list-container .dpp-item').forEach(item => item.classList.remove('active'));
+                dppItem.classList.add('active');
+                await showMediaViewer(dpp.fileHandle, 'dpp', dpp.fileName, null);
+            }
+        });
+
+        async function handleLectureFileDrop(files, type) {
+            const selectedLectureEl = document.querySelector('#upload-lecture-list .lecture-item.selected');
+            if (!selectedLectureEl) {
+                showToast('Please select a lecture from the list first!', true);
+                return;
+            }
+            if (files.length > 1) {
+                showToast('Please drop only one file at a time.', true);
+                return;
+            }
+            
+            const file = files[0];
+            const courseId = parseInt(document.getElementById('upload-detail-view').dataset.courseId);
+            const lectureId = selectedLectureEl.dataset.lectureId;
+            const progressData = getLectureProgress(courseId, lectureId);
+
+            if (type === 'pdf') {
+                if (!file.name.toLowerCase().endsWith('.pdf')) {
+                    showToast('Only PDF files are allowed for notes.', true);
+                    return;
+                }
+                await saveLectureProgress({ ...progressData, pdfHandle: file, pdfName: file.name, courseId, lectureId });
+            } else if (type === 'assignment') {
+                await saveLectureProgress({ ...progressData, assignmentHandle: file, assignmentName: file.name, assignmentType: file.type, courseId, lectureId });
+            }
+
+            showToast(`${type === 'pdf' ? 'Notes' : 'Assignment'} for "${selectedLectureEl.textContent.trim()}" added successfully!`);
+            
+            const existingProgress = getLectureProgress(courseId, lectureId);
+            const statusDiv = selectedLectureEl.querySelector('.file-status');
+            statusDiv.innerHTML = `
+                ${existingProgress.pdfHandle ? '<i class="fas fa-file-pdf" title="Notes added"></i>' : ''}
+                ${existingProgress.assignmentHandle ? '<i class="fas fa-file-alt" title="Assignment added"></i>' : ''}
+            `;
+        }
+        
+        const pdfDropZone = document.getElementById('pdf-drop-zone');
+        const assignmentDropZone = document.getElementById('assignment-drop-zone');
+        [pdfDropZone, assignmentDropZone].forEach(zone => {
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                zone.addEventListener(eventName, e => { e.preventDefault(); e.stopPropagation(); }, false);
+            });
+            zone.addEventListener('dragenter', () => zone.classList.add('dragover'));
+            zone.addEventListener('dragleave', () => zone.classList.remove('dragover'));
+            zone.addEventListener('drop', async (e) => {
+                zone.classList.remove('dragover');
+                await handleLectureFileDrop(e.dataTransfer.files, zone.dataset.type);
+            });
+        });
+        
+        // --- Notes Functions ---
+        async function renderNotesCourseSelectionView() {
+            nav.classList.remove('hidden');
+            const notesCourseGrid = document.getElementById('notes-course-grid');
+            document.getElementById('notes-detail-container').classList.add('hidden');
+            notesCourseGrid.classList.remove('hidden');
+
+            const notesProgress = Object.values(courseProgress).filter(p => p.pdfHandle);
+            const courseIdsWithNotes = [...new Set(notesProgress.map(p => p.courseId))];
+            const coursesWithNotes = courses.filter(c => courseIdsWithNotes.includes(c.id));
+
+            notesCourseGrid.innerHTML = '';
+            if (coursesWithNotes.length === 0) {
+                notesCourseGrid.innerHTML = `<p id="no-content-message">No notes uploaded for any course yet. Go to the Upload tab to add some.</p>`;
+                return;
+            }
+
+            coursesWithNotes.forEach(course => {
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.dataset.courseId = course.id;
+
+                const notesCount = notesProgress.filter(p => p.courseId === course.id).length;
+                 const ratingStarsHTML = Array.from({length: 5}, (_, i) => 
+                    `<i class="fa-star ${ (course.rating || 0) > i ? 'fas' : 'far'}"></i>`
+                ).join('');
+
+
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
+                        <i class="fas fa-book-open" style="font-size: 3rem;"></i>
+                    </div>
+                    <div class="course-info">
+                         <div>
+                            <h3 title="${course.title}">${course.title}</h3>
+                            <div class="course-extra-info">
+                                <div class="course-faculty">${course.facultyName || 'N/A Faculty'}</div>
+                                <div class="course-rating" style="pointer-events: none;">${ratingStarsHTML}</div>
+                            </div>
+                            <p class="course-meta">${notesCount} class notes</p>
+                        </div>
+                        <button class="enter-course-btn" style="margin-top: auto;">View Notes</button>
+                    </div>`;
+                notesCourseGrid.appendChild(card);
+            });
+        }
+
+        async function renderNotesDetailView(courseId) {
+            nav.classList.add('hidden');
+            const course = courses.find(c => c.id === courseId);
+             if (!course) {
+                showToast("Error: Course not found.", true);
+                switchView('notes-view');
+                return;
+            };
+
+            // Ensure lectures are loaded for chapter info
+            if (course.isLinked && course.handle && !course.lectures) {
+               await refreshCourse(course.id, null);
+            }
+
+            document.getElementById('notes-course-grid').classList.add('hidden');
+            const detailContainer = document.getElementById('notes-detail-container');
+            detailContainer.dataset.courseId = courseId;
+            detailContainer.classList.remove('hidden');
+            
+            document.getElementById('notes-detail-course-title').textContent = course.title;
+            const notesListContainer = document.getElementById('notes-list-container');
+            
+            const courseNotes = Object.values(courseProgress).filter(p => p.courseId === courseId && p.pdfHandle);
+
+            if (courseNotes.length === 0 || !course.chapters) {
+                notesListContainer.innerHTML = `<p id="no-content-message">No notes found for this course.</p>`;
+                return;
+            }
+            
+            let html = '';
+            course.chapters.forEach(chapter => {
+                const notesInChapter = courseNotes.filter(note => {
+                    return chapter.lectures.some(lec => lec.id === note.lectureId);
+                });
+
+                if (notesInChapter.length > 0) {
+                    html += `<div class="notes-folder-group open">
+                                <div class="notes-folder-title"><i class="fas fa-chevron-right"></i> <span>${chapter.name}</span></div>
+                                <div class="notes-list">`;
+                    
+                    notesInChapter.forEach(note => {
+                        html += `<div class="notes-item" data-lecture-id="${note.lectureId}">
+                                    <span class="notes-item-title">${note.lectureName || 'Unnamed Note'}</span>
+                                 </div>`;
+                    });
+
+                    html += `</div></div>`;
+                }
+            });
+            notesListContainer.innerHTML = html;
+        }
+
+        const notesSidebarToggleBtn = document.getElementById('notes-sidebar-toggle-btn');
+        notesSidebarToggleBtn.addEventListener('click', () => {
+            document.getElementById('notes-sidebar').classList.toggle('hidden');
+            notesSidebarToggleBtn.classList.toggle('collapsed');
+        });
+
+        document.getElementById('notes-list-container').addEventListener('click', async (e) => {
+            const folderTitle = e.target.closest('.notes-folder-title');
+            if (folderTitle) {
+                e.stopPropagation();
+                folderTitle.parentElement.classList.toggle('open');
+                return;
+            }
+
+            const noteItem = e.target.closest('.notes-item');
+            if(noteItem) {
+                const courseId = parseInt(document.getElementById('notes-detail-container').dataset.courseId);
+                const lectureId = noteItem.dataset.lectureId;
+                const progress = getLectureProgress(courseId, lectureId);
+
+                if (progress && progress.pdfHandle) {
+                    document.querySelectorAll('#notes-list-container .notes-item').forEach(item => item.classList.remove('active'));
+                    noteItem.classList.add('active');
+                    await showMediaViewer(progress.pdfHandle, 'note', progress.pdfName, null);
+                }
+            }
+        });
+
+
+        // --- Init ---
         async function main() {
             if (!window.indexedDB || !window.showDirectoryPicker) { document.body.innerHTML = "<h1>Browser Not Supported</h1><p>Please use a modern browser like Google Chrome or Microsoft Edge that supports the File System Access API and IndexedDB.</p>"; return; }
             await openDB();
