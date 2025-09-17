@@ -899,13 +899,22 @@
                     card.dataset.courseIdFilter = course.id;
                     card.dataset.statusFilter = status;
                     card.style.cursor = 'pointer';
+
+                    const ratingStarsHTML = Array.from({length: 5}, (_, i) => 
+                        `<i class="fa-star ${ (course.rating || 0) > i ? 'fas' : 'far'}"></i>`
+                    ).join('');
+
                     card.innerHTML = `
                          <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                              <i class="fas fa-photo-video"></i>
                          </div>
-                         <div class="course-info" style="padding: 12px;">
+                         <div class="course-info" style="padding: 12px; justify-content: flex-start;">
                              <h3>${course.title}</h3>
-                             <div class="course-progress-container">
+                             <div class="course-extra-info">
+                                <div class="course-faculty">${course.facultyName || 'N/A Faculty'}</div>
+                                <div class="course-rating" style="pointer-events: none;">${ratingStarsHTML}</div>
+                            </div>
+                             <div class="course-progress-container" style="margin-top: auto;">
                                  <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${progress.percentage}%"></div></div>
                                  <div class="course-progress-text">${progress.completed} / ${progress.total || course.videoCount || 0} completed</div>
                              </div>
@@ -2412,14 +2421,35 @@
                 const card = document.createElement('div');
                 card.className = 'course-card';
                 card.dataset.courseId = course.id;
+
+                const courseDpps = allDpps.filter(d => d.courseId === course.id);
+                const totalDpps = courseDpps.length;
+                const solvedDpps = courseDpps.filter(d => d.completed).length;
+                const remainingDpps = totalDpps - solvedDpps;
+                const dppPercentage = totalDpps > 0 ? (solvedDpps / totalDpps) * 100 : 0;
+
+                const ratingStarsHTML = Array.from({length: 5}, (_, i) => 
+                    `<i class="fa-star ${ (course.rating || 0) > i ? 'fas' : 'far'}"></i>`
+                ).join('');
+
                 card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                         <i class="fas fa-file-invoice" style="font-size: 3rem;"></i>
                     </div>
                     <div class="course-info">
-                        <h3>${course.title}</h3>
-                        <p class="course-meta">${allDpps.filter(d => d.courseId === course.id).length} DPPs</p>
-                        <button class="enter-course-btn" style="margin-top: auto;">View DPPs</button>
+                        <div>
+                            <h3 title="${course.title}">${course.title}</h3>
+                            <div class="course-extra-info">
+                                <div class="course-faculty">${course.facultyName || 'N/A Faculty'}</div>
+                                <div class="course-rating" style="pointer-events: none;">${ratingStarsHTML}</div>
+                            </div>
+                            <p class="course-meta">${remainingDpps} DPPs remaining</p>
+                        </div>
+                        <div class="course-progress-container">
+                            <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${dppPercentage}%"></div></div>
+                            <div class="course-progress-text">${solvedDpps} / ${totalDpps} DPPs solved</div>
+                        </div>
+                        <button class="enter-course-btn" style="margin-top: 12px;">Solve DPP</button>
                     </div>`;
                 dppCourseGrid.appendChild(card);
             });
@@ -2917,3 +2947,4 @@
     </script>
 </body>
 </html>
+
