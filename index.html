@@ -1177,7 +1177,7 @@
                              ${pdfBtn}
                              ${assignBtn}
                          </div>
-                         <span class="lecture-duration">${formatTime(lecture.duration, false)}</span>
+                         <span class="lecture-duration">${formatTime(lecture.duration)}</span>
                          <button class="status-btn ${progress.status || ''}" data-lecture-name="${lecture.displayName}" data-duration="${lecture.duration}">
                              ${progress.status ? progress.status.toUpperCase() : 'STATUS'}
                          </button>`;
