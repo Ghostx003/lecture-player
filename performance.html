@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-accent="green">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Dashboard - CourseFlix</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #f9fafb; --bg-secondary: #ffffff; --bg-tertiary: #f3f4f6;
+            --text-primary: #1f2937; --text-secondary: #6b7280; --text-on-accent: #ffffff;
+            --border-primary: #e5e7eb; --border-secondary: #d1d5db; --accent-danger: #ef4444;
+        }
+        html[data-theme="dark"] {
+            --bg-primary: #000000; --bg-secondary: #121212; --bg-tertiary: #1E1E1E;
+            --text-primary: #f5f5f5; --text-secondary: #a3a3a3;
+            --border-primary: #27272a; --border-secondary: #3f3f46;
+        }
+        html[data-accent="green"] {
+            --accent-primary: #16a34a; --accent-hover: #15803d; --progress-circle-fg: #22c55e;
+            --accent-primary_translucent: rgba(34, 197, 94, 0.4);
+            --accent-heatmap: 34, 197, 94;
+        }
+        body {
+            font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent;
+            background-color: var(--bg-primary); color: var(--text-primary);
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .dashboard-card {
+            background-color: var(--bg-secondary); border-radius: 1rem; padding: 1.5rem;
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            display: flex; flex-direction: column; border: 1px solid var(--border-primary);
+            transition: border-color 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+        }
+         html[data-theme="dark"] .dashboard-card:hover {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 15px -2px var(--accent-primary_translucent);
+            transform: translateY(-2px);
+        }
+        .dashboard-select {
+            background-color: var(--bg-tertiary); color: var(--text-primary); font-size: 0.875rem;
+            font-weight: 600; border-radius: 0.375rem; border-width: 0; padding: 0.5rem;
+        }
+        .star-rating .star { color: var(--border-secondary); cursor: pointer; transition: color 0.2s; }
+        .star-rating .star.selected, .star-rating:hover .star:hover, .star-rating .star:hover~.star { color: #f59e0b; }
+        .star-rating:hover .star { color: var(--border-secondary); }
+        .star-rating:hover .star:hover, .star-rating:hover .star:hover~.star { color: #f59e0b; }
+        .progress-circle-bg { fill: none; stroke: var(--border-primary); }
+        .progress-circle-fg { fill: none; stroke: var(--progress-circle-fg); stroke-linecap: round; transform-origin: 50% 50%; transform: rotate(-90deg); transition: stroke-dashoffset 0.5s ease; }
+        .progress-circle-text { font-size: 12px; font-weight: 600; fill: var(--text-primary); }
+        .heatmap-cell { aspect-ratio: 1 / 1; width: 100%; border-radius: 6px; background-color: var(--bg-tertiary); position: relative; }
+        .heatmap-cell:hover .heatmap-tooltip { display: block; }
+        .heatmap-tooltip { display: none; position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%); background-color: #1f2937; color: #f9fafb; padding: 4px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; z-index: 10; }
+        .heatmap-level-1 { background-color: rgba(var(--accent-heatmap), 0.15); }
+        .heatmap-level-2 { background-color: rgba(var(--accent-heatmap), 0.30); }
+        .heatmap-level-3 { background-color: rgba(var(--accent-heatmap), 0.45); }
+        .heatmap-level-4 { background-color: rgba(var(--accent-heatmap), 0.60); }
+        .heatmap-level-5 { background-color: rgba(var(--accent-heatmap), 0.80); }
+        .heatmap-level-6 { background-color: rgba(var(--accent-heatmap), 1.0); }
+        .empty-state-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; min-height: 100px; }
+    </style>
+</head>
+<body>
+    <div id="dashboard-view" class="p-4 md:p-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-main">Performance</h1>
+            <div id="dashboard-date" class="text-lg font-semibold text-subtle"></div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="dashboard-card justify-between">
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-lg font-bold text-main mb-1">Most Watched</h2>
+                                <p id="most-watched-subject" class="text-2xl font-bold" style="color: var(--accent-primary);">Loading...</p>
+                                <p id="most-watched-hours" class="text-subtle font-semibold">-- hours</p>
+                            </div>
+                            <select id="most-watched-period" class="dashboard-select">
+                                <option value="all">All Time</option>
+                                <option value="month">This Month</option>
+                                <option value="week">This Week</option>
+                                <option value="today">Today</option>
+                            </select>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-subtle mb-1">Rate this course</p>
+                            <div id="most-watched-rating" class="star-rating flex space-x-1 text-2xl"></div>
+                        </div>
+                    </div>
+                    <div class="dashboard-card justify-between">
+                         <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h2 class="text-lg font-bold text-main mb-1">Least Watched</h2>
+                                <p id="least-watched-subject" class="text-2xl font-bold" style="color: var(--accent-primary);">Loading...</p>
+                                <p id="least-watched-hours" class="text-subtle font-semibold">-- hours</p>
+                            </div>
+                            <select id="least-watched-period" class="dashboard-select">
+                                <option value="all">All Time</option>
+                                <option value="month">This Month</option>
+                                <option value="week">This Week</option>
+                            </select>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-subtle mb-1">Rate this course</p>
+                            <div id="least-watched-rating" class="star-rating flex space-x-1 text-2xl"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h2 class="text-lg font-bold text-main mb-4">Lecture Tracker</h2>
+                    <div id="lecture-tracker-cards" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                        </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-main">Hours Watched</h2>
+                            <p id="hours-activity-change" class="text-sm font-semibold"></p>
+                        </div>
+                        <select id="hours-activity-period" class="dashboard-select">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                        </select>
+                    </div>
+                    <div class="h-64 flex-grow">
+                        <canvas id="hours-activity-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-1 space-y-6">
+                <div class="dashboard-card">
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-lg font-bold text-main">Watch Time</h2>
+                        <select id="learning-time-period" class="dashboard-select">
+                            <option value="today">Today</option>
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="all">All Time</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-center items-center my-4 relative h-48 w-48 mx-auto" id="learning-time-chart-container">
+                        <canvas id="learning-time-chart-canvas"></canvas>
+                    </div>
+                    <div id="learning-time-legend" class="mt-4 space-y-2"></div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h2 class="text-lg font-bold text-main mb-4">Course Progress</h2>
+                    <div id="course-list" class="space-y-4 max-h-80 overflow-y-auto flex-grow"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="dashboard-card mt-6">
+             <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-main">Study Activity</h2>
+                <div class="flex items-center space-x-2">
+                    <button id="heatmap-prev-btn" class="p-1 rounded-full hover:bg-tertiary transition-colors">&lt;</button>
+                    <h3 id="heatmap-month-year" class="font-semibold text-main text-sm w-28 text-center"></h3>
+                    <button id="heatmap-next-btn" class="p-1 rounded-full hover:bg-tertiary transition-colors">&gt;</button>
+                </div>
+            </div>
+            <div id="heatmap-container">
+                <div class="grid grid-cols-7 text-center text-xs text-subtle font-semibold mb-2">
+                    <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                </div>
+                <div id="heatmap-grid" class="w-full grid grid-cols-7 gap-2"></div>
+            </div>
+        </div>
+    </div>
+
+<script>
+// NOTE: This script is designed to run within the CourseFlix app environment.
+// It assumes access to the same IndexedDB instance.
+
+function initPerformanceDashboard() {
+    const DB_NAME = 'CourseFlixDB';
+    const DB_VERSION = 9; // Should match the main app's DB version
+    const COURSE_STORE = 'courses';
+    const PROGRESS_STORE = 'progress';
+    const SESSION_STORE = 'studySessions'; // This store needs to be created by the main app
+
+    let db;
+    let allCourses = [];
+    let allProgress = {};
+    let allSessions = [];
+    let hoursActivityChart = null;
+    let learningTimeDonutChart = null;
+    let heatmapDate = new Date();
+
+    // --- DB HELPER ---
+    function openDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            request.onerror = () => reject("Error opening DB for dashboard");
+            request.onsuccess = (event) => {
+                db = event.target.result;
+                // Check if the studySessions store exists, crucial for this dashboard
+                if (!db.objectStoreNames.contains(SESSION_STORE)) {
+                     console.error(`'${SESSION_STORE}' object store not found. Please update the main app's onupgradeneeded function.`);
+                     alert(`Performance dashboard requires an update to the main app's database. Please contact support.`);
+                }
+                resolve(db);
+            };
+            // The main app is responsible for creating stores. This is just for safety.
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(SESSION_STORE)) {
+                    db.createObjectStore(SESSION_STORE, { keyPath: 'id', autoIncrement: true });
+                }
+            };
+        });
+    }
+
+    async function getAllFromStore(storeName) {
+        return new Promise((resolve, reject) => {
+            if (!db) return reject("DB not open");
+            const transaction = db.transaction(storeName, 'readonly');
+            const store = transaction.objectStore(storeName);
+            const request = store.getAll();
+            request.onerror = () => reject(`Error fetching from ${storeName}`);
+            request.onsuccess = () => resolve(request.result);
+        });
+    }
+
+    // --- DATA PROCESSING ---
+    function formatMinutesToHoursAndMinutes(totalMinutes) {
+        if (isNaN(totalMinutes) || totalMinutes <= 0) return '0m';
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = Math.round(totalMinutes % 60);
+        if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+        if (hours > 0) return `${hours}h`;
+        return `${minutes}m`;
+    }
+
+    function getDateKeysForPeriod(period) {
+        const now = new Date();
+        const start = new Date();
+        const end = new Date(now);
+
+        switch (period) {
+            case 'today':
+                start.setHours(0, 0, 0, 0);
+                break;
+            case 'week':
+                start.setDate(now.getDate() - now.getDay());
+                start.setHours(0, 0, 0, 0);
+                break;
+            case 'month':
+                start.setDate(1);
+                start.setHours(0, 0, 0, 0);
+                break;
+            case 'all':
+                return allSessions.map(s => s.timestamp);
+        }
+        return allSessions.filter(s => s.timestamp >= start.getTime() && s.timestamp <= end.getTime()).map(s => s.timestamp);
+    }
+    
+    function calculateWatchStats(period) {
+        const stats = {};
+        allCourses.forEach(c => { stats[c.title] = { minutes: 0, id: c.id }; });
+
+        const now = new Date();
+        const start = new Date();
+        
+        switch (period) {
+            case 'today': start.setHours(0, 0, 0, 0); break;
+            case 'week': start.setDate(now.getDate() - now.getDay()); start.setHours(0, 0, 0, 0); break;
+            case 'month': start.setDate(1); start.setHours(0, 0, 0, 0); break;
+            case 'all': start.setTime(0); break;
+        }
+
+        const filteredSessions = allSessions.filter(s => s.timestamp >= start.getTime());
+
+        filteredSessions.forEach(session => {
+            if (stats[session.courseTitle]) {
+                stats[session.courseTitle].minutes += session.duration / 60;
+            }
+        });
+        return stats;
+    }
+
+
+    // --- RENDER FUNCTIONS ---
+    function renderMostLeastWatched() {
+        const mostPeriod = document.getElementById('most-watched-period').value;
+        const leastPeriod = document.getElementById('least-watched-period').value;
+
+        const mostStats = calculateWatchStats(mostPeriod);
+        const leastStats = calculateWatchStats(leastPeriod);
+        
+        const mostEntries = Object.entries(mostStats).filter(([, data]) => data.minutes > 0);
+        const leastEntries = Object.entries(leastStats); // Include zero-watch courses
+
+        // Most Watched
+        if (mostEntries.length > 0) {
+            const [subject, data] = mostEntries.sort(([, a], [, b]) => b.minutes - a.minutes)[0];
+            document.getElementById('most-watched-subject').textContent = subject;
+            document.getElementById('most-watched-hours').textContent = formatMinutesToHoursAndMinutes(data.minutes);
+            renderStarRating(document.getElementById('most-watched-rating'), data.id);
+        } else {
+            document.getElementById('most-watched-subject').textContent = "N/A";
+            document.getElementById('most-watched-hours').textContent = "No activity";
+            document.getElementById('most-watched-rating').innerHTML = '';
+        }
+
+        // Least Watched
+        if (leastEntries.length > 1) { // Need at least 2 courses to compare
+            const [subject, data] = leastEntries.sort(([, a], [, b]) => a.minutes - b.minutes)[0];
+             document.getElementById('least-watched-subject').textContent = subject;
+            document.getElementById('least-watched-hours').textContent = formatMinutesToHoursAndMinutes(data.minutes);
+            renderStarRating(document.getElementById('least-watched-rating'), data.id);
+        } else {
+            document.getElementById('least-watched-subject').textContent = "N/A";
+            document.getElementById('least-watched-hours').textContent = "Not enough data";
+            document.getElementById('least-watched-rating').innerHTML = '';
+        }
+    }
+    
+    async function renderStarRating(container, courseId) {
+        container.innerHTML = '';
+        if (!courseId) return;
+        const course = allCourses.find(c => c.id === courseId);
+        if (!course) return;
+
+        const currentRating = course.rating || 0;
+        for (let i = 1; i <= 5; i++) {
+            const star = document.createElement('span');
+            star.classList.add('star');
+            star.innerHTML = '★';
+            if (i <= currentRating) star.classList.add('selected');
+            star.dataset.value = i;
+            star.addEventListener('click', async () => {
+                const newRating = (course.rating === i) ? 0 : i;
+                course.rating = newRating;
+                
+                // Save back to DB
+                const transaction = db.transaction(COURSE_STORE, 'readwrite');
+                const store = transaction.objectStore(COURSE_STORE);
+                store.put(course);
+                await new Promise(resolve => transaction.oncomplete = resolve);
+                
+                renderStarRating(container, courseId);
+            });
+            container.appendChild(star);
+        }
+    }
+    
+    function renderWatchTimeChart() {
+        const period = document.getElementById('learning-time-period').value;
+        const stats = calculateWatchStats(period);
+        const legendContainer = document.getElementById('learning-time-legend');
+        const chartContainer = document.getElementById('learning-time-chart-container');
+        
+        const entries = Object.entries(stats).filter(([, data]) => data.minutes > 0);
+        const totalMinutes = entries.reduce((sum, [, data]) => sum + data.minutes, 0);
+
+        legendContainer.innerHTML = '';
+        chartContainer.querySelector('#learning-time-text')?.remove();
+
+        if (learningTimeDonutChart) learningTimeDonutChart.destroy();
+
+        if (entries.length === 0) {
+            legendContainer.innerHTML = '<p class="text-sm text-subtle text-center">No watch activity for this period.</p>';
+            return;
+        }
+
+        const labels = entries.map(([name]) => name);
+        const data = entries.map(([, data]) => data.minutes);
+        const backgroundColors = labels.map(label => getSubjectColor(label));
+
+        learningTimeDonutChart = new Chart(document.getElementById('learning-time-chart-canvas'), {
+            type: 'doughnut',
+            data: {
+                labels: labels,
+                datasets: [{ data: data, backgroundColor: backgroundColors, borderWidth: 0 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '70%',
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        const textEl = document.createElement('div');
+        textEl.id = 'learning-time-text';
+        textEl.className = "absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none";
+        textEl.innerHTML = `<span class="text-2xl font-bold text-main">${formatMinutesToHoursAndMinutes(totalMinutes)}</span>`;
+        chartContainer.appendChild(textEl);
+
+        entries.forEach(([subject, data]) => {
+            legendContainer.innerHTML += `
+                <div class="flex items-center justify-between text-sm">
+                    <div class="flex items-center">
+                        <span class="w-3 h-3 rounded-full mr-2" style="background-color: ${getSubjectColor(subject)};"></span>
+                        <span class="text-main">${subject}</span>
+                    </div>
+                    <span class="font-bold text-subtle">${formatMinutesToHoursAndMinutes(data.minutes)}</span>
+                </div>`;
+        });
+    }
+
+    function createProgressCircle(progress, radius, strokeWidth, textContent) {
+        const circumference = 2 * Math.PI * radius;
+        const offset = circumference - (progress / 100) * circumference;
+        const size = (radius + strokeWidth) * 2;
+        return `
+            <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" class="flex-shrink-0">
+                <circle class="progress-circle-bg" cx="${radius + strokeWidth}" cy="${radius + strokeWidth}" r="${radius}" stroke-width="${strokeWidth}"></circle>
+                <circle class="progress-circle-fg" cx="${radius + strokeWidth}" cy="${radius + strokeWidth}" r="${radius}" stroke-width="${strokeWidth}" stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"></circle>
+                <text x="50%" y="50%" dy=".3em" text-anchor="middle" class="progress-circle-text">${textContent}</text>
+            </svg>`;
+    }
+
+    function renderCourseList() {
+        const container = document.getElementById('course-list');
+        container.innerHTML = '';
+        if (allCourses.length === 0) {
+            container.innerHTML = `<div class="empty-state-container"><p class="text-sm text-subtle">No courses found.</p></div>`;
+            return;
+        }
+        allCourses.forEach(course => {
+            const lectures = course.lectures || [];
+            const completedCount = lectures.filter(l => allProgress[`${course.id}_${l.id}`]?.completed).length;
+            const totalCount = lectures.length;
+            const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+
+            container.innerHTML += `
+                <div class="flex items-center p-3 rounded-lg" style="background-color: var(--bg-tertiary);">
+                    <div class="flex-grow">
+                        <p class="font-bold text-main">${course.title}</p>
+                        <p class="text-sm text-subtle font-semibold">${completedCount} / ${totalCount} lectures</p>
+                    </div>
+                    ${createProgressCircle(progress, 18, 4, `${Math.round(progress)}%`)}
+                </div>`;
+        });
+    }
+
+    function renderLectureTracker() {
+        const container = document.getElementById('lecture-tracker-cards');
+        container.innerHTML = '';
+        if (allCourses.length === 0) {
+            container.innerHTML = `<div class="empty-state-container col-span-full"><p class="text-sm text-subtle">Add courses in the main app to track them here.</p></div>`;
+            return;
+        }
+        allCourses.slice(0, 6).forEach(course => { // Show up to 6 courses
+            const lectures = course.lectures || [];
+            const completedCount = lectures.filter(l => allProgress[`${course.id}_${l.id}`]?.completed).length;
+            const totalCount = lectures.length;
+
+            container.innerHTML += `
+                <div class="bg-tertiary p-3 rounded-lg space-y-2 text-center">
+                    <p class="font-bold text-main truncate">${course.title}</p>
+                    <p class="text-3xl font-bold text-main">${completedCount} / ${totalCount}</p>
+                    <p class="text-xs text-subtle font-semibold">LECTURES COMPLETED</p>
+                </div>`;
+        });
+    }
+
+    function renderHoursActivity() {
+        const period = document.getElementById('hours-activity-period').value;
+        const now = new Date();
+        const labels = [];
+        const currentData = [];
+        
+        if (period === 'weekly') {
+            labels.push('Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat');
+            const dayOfWeek = now.getDay();
+            for (let i = 0; i < 7; i++) {
+                const date = new Date(now);
+                date.setDate(now.getDate() - dayOfWeek + i);
+                const startOfDay = new Date(date).setHours(0,0,0,0);
+                const endOfDay = new Date(date).setHours(23,59,59,999);
+                const dailyMinutes = allSessions
+                    .filter(s => s.timestamp >= startOfDay && s.timestamp <= endOfDay)
+                    .reduce((sum, s) => sum + s.duration / 60, 0);
+                currentData.push(dailyMinutes / 60); // hours
+            }
+        } else { // monthly
+            const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+            for (let i = 1; i <= daysInMonth; i++) {
+                labels.push(i);
+                const date = new Date(now.getFullYear(), now.getMonth(), i);
+                const startOfDay = new Date(date).setHours(0,0,0,0);
+                const endOfDay = new Date(date).setHours(23,59,59,999);
+                const dailyMinutes = allSessions
+                    .filter(s => s.timestamp >= startOfDay && s.timestamp <= endOfDay)
+                    .reduce((sum, s) => sum + s.duration / 60, 0);
+                currentData.push(dailyMinutes / 60); // hours
+            }
+        }
+        
+        if (hoursActivityChart) hoursActivityChart.destroy();
+        
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent-primary');
+        hoursActivityChart = new Chart(document.getElementById('hours-activity-chart'), {
+            type: 'bar',
+            data: { labels: labels, datasets: [{ label: 'Hours Watched', data: currentData, backgroundColor: accentColor + 'BF' }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    function renderHeatmap() {
+        const grid = document.getElementById('heatmap-grid');
+        grid.innerHTML = '';
+        const year = heatmapDate.getFullYear();
+        const month = heatmapDate.getMonth();
+        document.getElementById('heatmap-month-year').textContent = `${heatmapDate.toLocaleString('default', { month: 'long' })} ${year}`;
+
+        const dailyTotals = {};
+        allSessions.forEach(s => {
+            const dateKey = new Date(s.timestamp).toISOString().split('T')[0];
+            dailyTotals[dateKey] = (dailyTotals[dateKey] || 0) + s.duration;
+        });
+        const maxSeconds = Math.max(1, ...Object.values(dailyTotals));
+
+        const firstDayOfMonth = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        for (let i = 0; i < firstDayOfMonth; i++) grid.appendChild(document.createElement('div'));
+
+        for (let i = 1; i <= daysInMonth; i++) {
+            const date = new Date(year, month, i);
+            const dateKey = date.toISOString().split('T')[0];
+            const seconds = dailyTotals[dateKey] || 0;
+            const cell = document.createElement('div');
+            cell.className = 'heatmap-cell';
+
+            if (seconds > 0) {
+                const intensity = seconds / maxSeconds;
+                let level = Math.ceil(intensity * 5);
+                if (level > 0) cell.classList.add(`heatmap-level-${level}`);
+            }
+            
+            cell.innerHTML = `<div class="heatmap-tooltip">${date.toDateString()}<br>${formatMinutesToHoursAndMinutes(seconds / 60)} watched</div>`;
+            grid.appendChild(cell);
+        }
+    }
+    
+    // --- EVENT LISTENERS ---
+    function addEventListeners() {
+        document.getElementById('most-watched-period').addEventListener('change', renderMostLeastWatched);
+        document.getElementById('least-watched-period').addEventListener('change', renderMostLeastWatched);
+        document.getElementById('learning-time-period').addEventListener('change', renderWatchTimeChart);
+        document.getElementById('hours-activity-period').addEventListener('change', renderHoursActivity);
+        document.getElementById('heatmap-prev-btn').addEventListener('click', () => { heatmapDate.setMonth(heatmapDate.getMonth() - 1); renderHeatmap(); });
+        document.getElementById('heatmap-next-btn').addEventListener('click', () => { heatmapDate.setMonth(heatmapDate.getMonth() + 1); renderHeatmap(); });
+    }
+
+    // --- INITIALIZATION ---
+    async function initialize() {
+        try {
+            await openDB();
+            const [courses, progress, sessions] = await Promise.all([
+                getAllFromStore(COURSE_STORE),
+                getAllFromStore(PROGRESS_STORE),
+                getAllFromStore(SESSION_STORE)
+            ]);
+
+            allCourses = courses;
+            allSessions = sessions;
+            progress.forEach(p => { allProgress[p.id] = p; });
+            
+            document.getElementById('dashboard-date').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            renderMostLeastWatched();
+            renderWatchTimeChart();
+            renderCourseList();
+            renderLectureTracker();
+            renderHoursActivity();
+            renderHeatmap();
+            addEventListeners();
+
+        } catch (error) {
+            console.error("Failed to initialize performance dashboard:", error);
+            document.getElementById('dashboard-view').innerHTML = `<p class="text-center text-red-500">Could not load performance data. Ensure the main application is set up correctly.</p>`;
+        }
+    }
+    
+    // Kick off the dashboard initialization
+    initialize();
+}
+
+// Self-invoking call for standalone testing or direct load
+// In the integrated app, you would call `initPerformanceDashboard()` manually.
+if (typeof CourseFlixMainApp === 'undefined') {
+    initPerformanceDashboard();
+}
+
+</script>
+</body>
+</html>
