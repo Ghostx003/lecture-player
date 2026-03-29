@@ -72,7 +72,7 @@
 
         /* --- GRIDS --- */
         .grid-container { overflow-y: auto; flex-grow: 1; padding: 24px; }
-        #course-grid, #upload-course-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
+        #course-grid, #subcourse-grid, #upload-course-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;
         }
         #review-grid, #practice-grid {
@@ -95,18 +95,19 @@
         }
         .thumbnail-placeholder i { font-size: 2.5rem; color: var(--text-secondary); opacity: 0.4; }
         .thumbnail-placeholder.has-thumbnail i { display: none; }
-        .remove-course-btn, .remove-thumbnail-btn, .refresh-course-btn {
+        .remove-course-btn, .relocate-course-btn, .remove-thumbnail-btn, .refresh-course-btn {
             position: absolute; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px;
             cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s; z-index: 2;
         }
         .remove-course-btn { top: 8px; right: 8px; }
+        .relocate-course-btn { top: 8px; right: 42px; }
         .remove-thumbnail-btn { top: 8px; left: 8px; display: none; }
         .refresh-course-btn { top: 8px; left: 50%; transform: translateX(-50%); }
         .refresh-course-btn.loading i { animation: spin 1.5s linear infinite; }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .remove-course-btn:hover, .remove-thumbnail-btn:hover { background: var(--accent-danger); }
-        .refresh-course-btn:hover { background: var(--accent-primary); }
-        .course-card:hover .remove-course-btn, .course-card:hover .refresh-course-btn { opacity: 1; }
+        .refresh-course-btn:hover, .relocate-course-btn:hover { background: var(--accent-primary); }
+        .course-card:hover .remove-course-btn, .course-card:hover .relocate-course-btn, .course-card:hover .refresh-course-btn { opacity: 1; }
         .course-card:hover .thumbnail-placeholder.has-thumbnail .remove-thumbnail-btn { opacity: 1; display: flex; }
         .course-info { padding: 12px 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: space-between; }
         .upload-card-actions { padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
@@ -114,7 +115,14 @@
         .course-info-input { width: 100%; font-size: 1rem; font-weight: 600; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); }
         html[data-theme="dark"] .course-info-input { color: var(--text-primary); }
         .course-meta { font-size: 0.8rem; color: var(--text-secondary); margin: 0 0 8px 0; }
-        .course-duration { font-size: 0.75rem; color: var(--accent-primary); margin-bottom: 8px; font-weight: 500; }
+        .course-duration { font-size: 0.75rem; color: var(--accent-primary); font-weight: 500; }
+        
+        /* SPLIT FOLDER CHECKBOX STYLES */
+        .course-duration-wrapper { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 8px; }
+        .split-view-label { font-size: 0.75rem; color: var(--text-secondary); display: flex; align-items: center; gap: 6px; cursor: pointer; transition: color 0.2s; }
+        .split-view-label:hover { color: var(--text-primary); }
+        .split-view-label input[type="checkbox"] { cursor: pointer; accent-color: var(--accent-primary); margin: 0; width: 14px; height: 14px; }
+
         .course-progress-container { margin-top: auto; }
         .course-progress-bar, .lecture-progress-bar, .menu-progress-bar { width: 100%; height: 6px; background-color: var(--bg-tertiary); border-radius: 3px; overflow: hidden; margin-bottom: 4px;}
         .course-progress-fill, .lecture-progress-fill, .menu-progress-fill { height: 100%; background-color: var(--accent-primary); transition: width 0.3s ease; }
@@ -376,6 +384,14 @@
     <div id="dashboard-view" class="view active">
         <main id="course-grid" class="grid-container"></main>
     </div>
+
+    <div id="subcourse-view" class="view">
+        <div class="view-header">
+            <a class="back-link" id="back-to-dashboard-from-sub" style="cursor: pointer; color: var(--accent-primary); font-weight: 500;">&larr; Back to Dashboard</a>
+            <h2 id="subcourse-parent-title" style="margin-left: 1rem; font-size: 1.25rem;"></h2>
+        </div>
+        <main id="subcourse-grid" class="grid-container"></main>
+    </div>
     
     <div id="upload-view" class="view">
         <main id="upload-course-grid" class="grid-container"></main>
@@ -403,8 +419,7 @@
     </div>
 
     <div id="filter-results-view" class="view">
-        <!-- This will be populated dynamically -->
-    </div>
+        </div>
 
     <div id="dpp-upload-view" class="view">
         <div id="dpp-upload-sidebar">
@@ -622,6 +637,7 @@
 
         let courses = [];
         let currentCourse = null;
+        let currentSubfolder = null; // Track current subfolder path to properly scope the player
         let currentLectureLi = null;
         let courseProgress = {};
         let clickTimer = null;
@@ -654,6 +670,14 @@
             return `${hours} hours ${minutes} min left`;
         }
         const naturalSort = (a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' });
+        const naturalSortByNameOnly = (a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' });
+        function getParentPath(path) {
+            if (!path) return '';
+            const parts = path.split('/');
+            parts.pop();
+            return parts.join('/');
+        }
+
         async function getVideoDuration(file) { return new Promise(r => {const v=document.createElement('video');v.preload='metadata';v.onloadedmetadata=()=>{r(v.duration);URL.revokeObjectURL(v.src)};v.onerror=()=>r(0);v.src=URL.createObjectURL(file)}); }
         function showToast(message, isError = false) {
             const toast = document.createElement('div');
@@ -769,14 +793,14 @@
             await renderCourseGrid();
         }
         
-        async function scanDirectoryHandle(dirHandle) {
+        async function scanDirectoryHandle(dirHandle, basePath = '') {
             const chapters = {};
             const lectures = [];
             let totalDuration = 0;
             const videoRegex = /\.(mp4|mkv|webm|mov|avi)$/i;
             
             async function recurse(currentHandle, path) {
-                const chapterName = path || "Main Content";
+                const chapterName = path || (basePath ? basePath : "Main Content");
                 if (!chapters[chapterName]) {
                     chapters[chapterName] = { name: chapterName, lectures: [] };
                 }
@@ -807,12 +831,12 @@
                             console.error(`Could not process file ${entry.name}:`, e);
                         }
                     } else if (entry.kind === 'directory') {
-                        await recurse(entry, path ? `${path}/${entry.name}` : entry.name);
+                        await recurse(entry, path ? `${path}/${entry.name}` : (basePath ? `${basePath}/${entry.name}` : entry.name));
                     }
                 }
             }
 
-            await recurse(dirHandle, '');
+            await recurse(dirHandle, basePath);
             const sortedChapters = Object.values(chapters).filter(ch => ch.lectures.length > 0).sort((a, b) => naturalSort(a, b));
             return { chapters: sortedChapters, videoCount: lectures.length, lectures, totalDuration };
         }
@@ -847,9 +871,16 @@
                     `<i class="fa-star ${ (course.rating || 0) > i ? 'fas' : 'far'}" data-value="${i + 1}"></i>`
                 ).join('');
                 
+                const splitViewHtml = course.isLinked ? `
+                    <label class="split-view-label" title="Show subfolders as separate courses">
+                        <input type="checkbox" class="split-course-cb" data-id="${course.id}" ${course.isSplitView ? 'checked' : ''}>
+                        Split by Folders
+                    </label>` : '';
+
                 card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" data-id="${course.id}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                         <i class="fas fa-photo-video"></i>
+                        <button class="relocate-course-btn" data-id="${course.id}" title="Relocate Main Course Folder"><i class="fas fa-link"></i></button>
                         <button class="refresh-course-btn" data-id="${course.id}" title="Refresh Course Content"><i class="fas fa-sync-alt"></i></button>
                         <button class="remove-thumbnail-btn" data-id="${course.id}" title="Remove Thumbnail"><i class="fas fa-times"></i></button>
                         <button class="remove-course-btn" data-id="${course.id}" title="Remove Course"><i class="fas fa-trash"></i></button>
@@ -862,7 +893,10 @@
                                 <div class="course-rating">${ratingStarsHTML}</div>
                             </div>
                             <p class="course-meta">${course.videoCount || 0} videos</p>
-                            ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : ''}
+                            <div class="course-duration-wrapper">
+                                ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : '<div></div>'}
+                                ${splitViewHtml}
+                            </div>
                         </div>
                         <div class="course-progress-container">
                             <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${progress.percentage}%"></div></div>
@@ -872,6 +906,135 @@
                     </div>`;
                 courseGrid.appendChild(card);
             }
+        }
+
+        async function renderSubcourseView(courseId, basePath = '') {
+            const course = courses.find(c => c.id === parseInt(courseId));
+            if (!course || !course.handle) return;
+
+            if (await course.handle.queryPermission({ mode: 'read' }) !== 'granted') {
+                if (await course.handle.requestPermission({ mode: 'read' }) !== 'granted') {
+                    showToast('Permission denied.', true);
+                    return;
+                }
+            }
+
+            if (!course.lectures) {
+                try {
+                    await refreshCourse(course.id, null);
+                } catch (e) {
+                    showToast("Failed to scan course", true); return;
+                }
+            }
+
+            course.subCourseData = course.subCourseData || {};
+            const subcourseGrid = document.getElementById('subcourse-grid');
+            subcourseGrid.innerHTML = '';
+            
+            // Find relevant chapters that sit inside the basePath
+            const relevantChapters = course.chapters.filter(ch => basePath === '' || ch.name.startsWith(basePath + '/') || ch.name === basePath);
+            
+            // Extract immediate subdirectories
+            const immediateSubfoldersSet = new Set();
+            relevantChapters.forEach(ch => {
+                if (ch.name === basePath) return;
+                let relativePath = basePath === '' ? ch.name : ch.name.substring(basePath.length + 1);
+                let firstLevelFolder = relativePath.split('/')[0];
+                let fullPath = basePath === '' ? firstLevelFolder : `${basePath}/${firstLevelFolder}`;
+                immediateSubfoldersSet.add(fullPath);
+            });
+            
+            let immediateSubfolders = Array.from(immediateSubfoldersSet).sort(naturalSortByNameOnly);
+
+            if (immediateSubfolders.length === 0) {
+                showToast('No subfolders found here.', true);
+                await playLectureFromAnywhere(course.id, null, 'subcourse-view', basePath);
+                return;
+            }
+
+            switchView('subcourse-view');
+            const viewEl = document.getElementById('subcourse-view');
+            viewEl.dataset.currentPath = basePath;
+            viewEl.dataset.courseId = courseId;
+            
+            const titleDisplay = basePath === '' ? course.title : basePath.split('/').pop();
+            document.getElementById('subcourse-parent-title').textContent = titleDisplay + " (Folders)";
+
+            immediateSubfolders.forEach(fullPath => {
+                const subData = course.subCourseData[fullPath] || {};
+                if (subData.hidden) return; // Skip hidden subcourses
+
+                const folderNameOnly = fullPath.split('/').pop();
+                const faculty = subData.facultyName || course.facultyName || 'N/A Faculty';
+                const rating = subData.rating !== undefined ? subData.rating : (course.rating || 0);
+                const thumb = subData.thumbnail || null; // Inherit parent? Optional. Currently standalone.
+
+                const subLectures = course.lectures.filter(l => l.chapter === fullPath || l.chapter.startsWith(fullPath + '/'));
+                let completed = 0;
+                let timeCompleted = 0;
+                let subTotalDuration = 0;
+
+                subLectures.forEach(lecture => {
+                    subTotalDuration += lecture.duration || 0;
+                    const prog = getLectureProgress(course.id, lecture.id);
+                    if (prog.completed) {
+                        completed++;
+                        timeCompleted += lecture.duration || 0;
+                    }
+                });
+
+                const total = subLectures.length;
+                const percentage = total > 0 ? (completed / total) * 100 : 0;
+                const remainingDuration = Math.max(0, subTotalDuration - timeCompleted);
+
+                // Does this folder have deeper folders?
+                const hasDeeper = course.chapters.some(ch => ch.name.startsWith(fullPath + '/') && ch.name.length > fullPath.length + 1);
+                
+                const splitViewHtml = hasDeeper ? `
+                    <label class="split-view-label" title="Show subfolders as separate courses">
+                        <input type="checkbox" class="split-course-cb" data-id="${course.id}" data-subfolder="${fullPath}" ${subData.isSplitView ? 'checked' : ''}>
+                        Split Further
+                    </label>` : '<div></div>';
+
+                const ratingStarsHTML = Array.from({length: 5}, (_, i) =>
+                    `<i class="fa-star ${ rating > i ? 'fas' : 'far'}" data-value="${i + 1}"></i>`
+                ).join('');
+
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.dataset.id = course.id; 
+                card.dataset.subfolder = fullPath;
+
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${thumb ? 'has-thumbnail' : ''}" data-id="${course.id}" data-subfolder="${fullPath}" style="${thumb ? `background-image: url('${thumb}')` : ''}">
+                        <i class="fas fa-folder-open"></i>
+                        <button class="relocate-course-btn" data-id="${course.id}" data-subfolder="${fullPath}" title="Relocate Specific Subfolder"><i class="fas fa-link"></i></button>
+                        <button class="refresh-course-btn" data-id="${course.id}" data-subfolder="${fullPath}" title="Refresh Content"><i class="fas fa-sync-alt"></i></button>
+                        <button class="remove-thumbnail-btn" data-id="${course.id}" data-subfolder="${fullPath}" title="Remove Thumbnail"><i class="fas fa-times"></i></button>
+                        <button class="remove-course-btn" data-id="${course.id}" data-subfolder="${fullPath}" title="Hide Subcourse"><i class="fas fa-eye-slash"></i></button>
+                    </div>
+                    <div class="course-info">
+                        <div>
+                            <h3 title="${folderNameOnly}">${folderNameOnly}</h3>
+                            <div class="course-extra-info subcourse-extra" data-id="${course.id}" data-subfolder="${fullPath}">
+                                <div class="course-faculty" title="Double-click to edit faculty">${faculty}</div>
+                                <div class="course-rating">${ratingStarsHTML}</div>
+                            </div>
+                            <p class="course-meta">${total} videos</p>
+                            <div class="course-duration-wrapper">
+                                <div class="course-duration">${formatDuration(subTotalDuration)} total • ${formatDuration(remainingDuration)} left</div>
+                                ${splitViewHtml}
+                            </div>
+                        </div>
+                        <div class="course-progress-container">
+                            <div class="course-progress-bar"><div class="course-progress-fill" style="width: ${percentage}%"></div></div>
+                            <div class="course-progress-text">${completed} / ${total} lectures completed</div>
+                        </div>
+                        <button class="enter-course-btn" data-id="${course.id}" data-subfolder="${fullPath}">Enter Course</button>
+                    </div>
+                `;
+                subcourseGrid.appendChild(card);
+            });
         }
 
         function showFilteredCoursesView(status) {
@@ -1051,16 +1214,36 @@
 
 
         // --- Player ---
-        function updateMenuProgress() {
+        function updateMenuProgress(subfolder = null) {
             if (!currentCourse) return;
-            const progress = calculateCourseProgress(currentCourse);
+            let lectures = currentCourse.lectures || [];
+            if (subfolder) {
+                lectures = lectures.filter(l => l.chapter === subfolder || l.chapter.startsWith(subfolder + '/'));
+            }
+
+            let completed = 0;
+            let timeCompleted = 0;
+            let totalDuration = 0;
+
+            lectures.forEach(lecture => {
+                totalDuration += lecture.duration || 0;
+                const prog = getLectureProgress(currentCourse.id, lecture.id);
+                if (prog.completed) {
+                    completed++;
+                    timeCompleted += lecture.duration || 0;
+                }
+            });
+
+            const percentage = lectures.length > 0 ? (completed / lectures.length) * 100 : 0;
+            const remainingDuration = Math.max(0, totalDuration - timeCompleted);
+
             const container = document.querySelector('#player-view .menu-header');
-            container.querySelector('.course-stats').textContent = `${formatDuration(currentCourse.totalDuration)} total • ${formatDuration(progress.remainingDuration)} remaining`;
-            container.querySelector('.menu-progress-fill').style.width = `${progress.percentage}%`;
-            container.querySelector('.menu-progress-text').textContent = `${progress.completed}/${progress.total} lectures completed`;
+            container.querySelector('.course-stats').textContent = `${formatDuration(totalDuration)} total • ${formatDuration(remainingDuration)} remaining`;
+            container.querySelector('.menu-progress-fill').style.width = `${percentage}%`;
+            container.querySelector('.menu-progress-text').textContent = `${completed}/${lectures.length} lectures completed`;
         }
 
-        async function playLectureFromAnywhere(courseId, lectureId, originView = 'dashboard-view') {
+        async function playLectureFromAnywhere(courseId, lectureId, originView = 'dashboard-view', subfolder = null) {
             lastView = originView;
             const course = courses.find(c => c.id === parseInt(courseId));
             if (!course) {
@@ -1075,17 +1258,20 @@
                 }
                 course.isLinked = true;
             }
-            await renderPlayer(courseId, lectureId, originView);
+            await renderPlayer(courseId, lectureId, originView, null, subfolder);
         }
 
-        async function renderPlayer(courseId, lectureIdToPlay = null, originView = 'dashboard-view', startTime = null) {
+        async function renderPlayer(courseId, lectureIdToPlay = null, originView = 'dashboard-view', startTime = null, subfolder = null) {
             currentCourse = courses.find(c => c.id === parseInt(courseId));
+            currentSubfolder = subfolder;
             if (!currentCourse) return;
             switchView('player-view');
             chapterListDiv.innerHTML = '<p style="text-align:center; padding: 20px;">Loading lectures...</p>';
             
             if (originView === 'dashboard-view') {
                 backToLibraryBtn.textContent = '← Back to Courses';
+            } else if (originView === 'subcourse-view') {
+                backToLibraryBtn.textContent = '← Back to Subfolders';
             } else {
                 const statusName = originView.split('-')[0];
                 backToLibraryBtn.textContent = `← Back to ${statusName.charAt(0).toUpperCase() + statusName.slice(1)}`;
@@ -1094,10 +1280,7 @@
 
             if (!currentCourse.lectures || !currentCourse.chapters) {
                 try {
-                    const courseData = await scanDirectoryHandle(currentCourse.handle);
-                    currentCourse.lectures = courseData.lectures;
-                    currentCourse.totalDuration = courseData.totalDuration;
-                    currentCourse.chapters = courseData.chapters;
+                    await refreshCourse(currentCourse.id, null);
                 } catch (error) {
                     console.error('Failed to load course data:', error);
                     chapterListDiv.innerHTML = `<p id="no-content-message">Error: Could not load course content. The original folder may have been moved or deleted.</p>`;
@@ -1106,7 +1289,14 @@
             }
             
             let chaptersToDisplay = currentCourse.chapters;
-            if (originView === 'review-view' || originView === 'practice-view') {
+
+            if (subfolder) {
+                chaptersToDisplay = chaptersToDisplay.filter(ch => ch.name === subfolder || ch.name.startsWith(subfolder + '/'));
+                courseTitleMenu.textContent = `${currentCourse.title} - ${subfolder.split('/').pop()}`;
+                backToLibraryBtn.dataset.view = 'subcourse-view';
+                backToLibraryBtn.dataset.subfolder = subfolder;
+                clearBookmarksBtn.classList.remove('hidden');
+            } else if (originView === 'review-view' || originView === 'practice-view') {
                 const status = originView.split('-')[0];
                 const statusLectures = Object.values(courseProgress)
                     .filter(p => p.status === status && p.courseId === currentCourse.id)
@@ -1124,7 +1314,7 @@
                 clearBookmarksBtn.classList.remove('hidden');
             }
 
-            updateMenuProgress();
+            updateMenuProgress(subfolder);
             renderChapterList(chaptersToDisplay, lectureIdToPlay);
 
             const liToPlay = chapterListDiv.querySelector(`li[data-lecture-id="${lectureIdToPlay}"]`) || chapterListDiv.querySelector('li');
@@ -1146,11 +1336,14 @@
 
                  const chapterDuration = chapter.lectures.reduce((sum, lect) => sum + (lect.duration || 0), 0);
 
+                 // Show only the deepest path part to save space
+                 const displayName = chapter.name.split('/').pop();
+
                  chapterDiv.innerHTML = `
                      <div class="chapter-title">
                          <i class="fas fa-grip-vertical chapter-drag-handle" title="Drag to reorder"></i>
                          <i class="fas fa-chevron-right"></i>
-                         <span class="chapter-title-text" title="Double-click to rename">${chapter.name}</span>
+                         <span class="chapter-title-text" title="Double-click to rename">${displayName}</span>
                          <span class="chapter-duration">${formatDuration(chapterDuration)}</span>
                      </div>`;
 
@@ -1245,7 +1438,7 @@
                         courseTitle: currentCourse.title,
                         lectureDuration: lecture.duration
                     });
-                    updateMenuProgress();
+                    updateMenuProgress(currentSubfolder);
                     updateTotalTimeLeftDisplay();
                     liElement.querySelector('.lecture-checkbox').classList.add('completed');
                     liElement.querySelector('.lecture-title').classList.add('completed');
@@ -1261,7 +1454,7 @@
         async function refreshCourse(courseId, btnElement) {
             const course = courses.find(c => c.id === courseId);
             if (!course || !course.handle) {
-                showToast('Could not find the course folder. It may have been moved or deleted.', true);
+                showToast('Could not find the root course folder. It may have been moved or deleted.', true);
                 return;
             }
 
@@ -1276,14 +1469,42 @@
                 }
 
                 const newCourseData = await scanDirectoryHandle(course.handle);
+                
+                // Merge overriden custom relocated subfolder handles if any exist
+                if (course.subCourseData) {
+                    for (const subPath of Object.keys(course.subCourseData)) {
+                        const subHandle = course.subCourseData[subPath].handle;
+                        if (subHandle) {
+                            try {
+                                if (await subHandle.queryPermission({ mode: 'read' }) === 'granted') {
+                                    const subData = await scanDirectoryHandle(subHandle, subPath);
+                                    // Remove old scan results for this subpath
+                                    newCourseData.lectures = newCourseData.lectures.filter(l => !(l.chapter === subPath || l.chapter.startsWith(subPath + '/')));
+                                    newCourseData.chapters = newCourseData.chapters.filter(ch => !(ch.name === subPath || ch.name.startsWith(subPath + '/')));
+                                    // Inject custom scan results
+                                    newCourseData.lectures.push(...subData.lectures);
+                                    newCourseData.chapters.push(...subData.chapters);
+                                }
+                            } catch(e) { console.warn(`Relocated subfolder scan failed for ${subPath}`, e); }
+                        }
+                    }
+                }
 
                 course.lectures = newCourseData.lectures;
-                course.chapters = newCourseData.chapters;
-                course.videoCount = newCourseData.videoCount;
-                course.totalDuration = newCourseData.totalDuration;
+                course.chapters = newCourseData.chapters.sort((a,b)=>naturalSort(a,b));
+                course.videoCount = course.lectures.length;
+                course.totalDuration = course.lectures.reduce((sum, l) => sum + (l.duration||0), 0);
                 
                 await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
-                await renderCourseGrid();
+                
+                const currentView = document.querySelector('.view.active').id;
+                if (currentView === 'dashboard-view') {
+                    await renderCourseGrid();
+                } else if (currentView === 'subcourse-view') {
+                    const viewEl = document.getElementById('subcourse-view');
+                    const path = viewEl.dataset.currentPath || '';
+                    if(courseId === parseInt(viewEl.dataset.courseId)) await renderSubcourseView(courseId, path);
+                }
             } catch (error) {
                 console.error('Error refreshing course:', error);
                 showToast('An error occurred while refreshing the course.', true);
@@ -1395,13 +1616,54 @@
         // --- Event Listeners ---
         navLinks.forEach(link => link.addEventListener('click', (e) => { e.preventDefault(); switchView(e.target.dataset.view); }));
         homeBtn.addEventListener('click', () => switchView('dashboard-view'));
+        
+        document.body.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('split-course-cb')) {
+                const courseId = parseInt(e.target.dataset.id);
+                const subfolder = e.target.dataset.subfolder;
+                const course = courses.find(c => c.id === courseId);
+                
+                if (course) {
+                    if (subfolder) {
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        course.subCourseData[subfolder].isSplitView = e.target.checked;
+                    } else {
+                        course.isSplitView = e.target.checked;
+                    }
+                    await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                }
+            }
+        });
 
         document.body.addEventListener('click', async (e) => {
             userInteracted = true;
             videoPlayer.muted = false;
             unmuteBtn.classList.add('hidden');
 
-            if (e.target.closest('.enter-course-btn')) { await playLectureFromAnywhere(e.target.closest('.enter-course-btn').dataset.id, null); }
+            if (e.target.closest('.enter-course-btn')) { 
+                const btn = e.target.closest('.enter-course-btn');
+                const courseId = parseInt(btn.dataset.id);
+                const subfolder = btn.dataset.subfolder;
+                const course = courses.find(c => c.id === courseId);
+                if(!course) return;
+
+                if (subfolder) {
+                    const isSplit = course.subCourseData && course.subCourseData[subfolder] && course.subCourseData[subfolder].isSplitView;
+                    if (isSplit) {
+                        await renderSubcourseView(course.id, subfolder);
+                    } else {
+                        await playLectureFromAnywhere(courseId, null, 'subcourse-view', subfolder);
+                    }
+                } else {
+                    if (course.isSplitView && course.isLinked) {
+                        await renderSubcourseView(course.id, '');
+                    } else {
+                        await playLectureFromAnywhere(courseId, null);
+                    }
+                }
+                return;
+            }
             
             const reviewCard = e.target.closest('#review-grid .lecture-review-card, #practice-grid .lecture-review-card');
             if (reviewCard && !e.target.closest('.remove-status-btn')) {
@@ -1416,13 +1678,14 @@
                 const courseId = parseInt(filterResultsCard.dataset.courseIdFilter);
                 const status = filterResultsCard.dataset.statusFilter;
                 await playLectureFromAnywhere(courseId, null, `${status}-view`);
+                return;
             }
             
             const backToStatusBtn = e.target.closest('#back-to-status-view-btn');
             if(backToStatusBtn) {
                 switchView(backToStatusBtn.dataset.view);
+                return;
             }
-
 
             const removeStatusBtn = e.target.closest('.remove-status-btn');
             if (removeStatusBtn) {
@@ -1441,17 +1704,104 @@
                         renderStatusGrid('practice');
                     }
                 }
+                return;
             }
 
+            // Remove Course / Hide Subcourse
             const removeBtn = e.target.closest('.remove-course-btn');
-            if (removeBtn) { e.stopPropagation(); const courseId = parseInt(removeBtn.dataset.id); if (confirm('Are you sure you want to remove this course? This will also delete its progress.')) { await new Promise(resolve => getStore(STORE_NAME, 'readwrite').delete(courseId).onsuccess = resolve); await loadCoursesFromDB(); } }
+            if (removeBtn) { 
+                e.stopPropagation(); 
+                const courseId = parseInt(removeBtn.dataset.id); 
+                const subfolder = removeBtn.dataset.subfolder;
+                if (subfolder) {
+                    if (confirm('Are you sure you want to hide this subcourse?')) {
+                        const course = courses.find(c => c.id === courseId);
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        course.subCourseData[subfolder].hidden = true;
+                        await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                        const parentPath = getParentPath(subfolder);
+                        await renderSubcourseView(courseId, parentPath);
+                    }
+                } else {
+                    if (confirm('Are you sure you want to remove this root course? This will also delete its progress.')) { 
+                        await new Promise(resolve => getStore(STORE_NAME, 'readwrite').delete(courseId).onsuccess = resolve); 
+                        await loadCoursesFromDB(); 
+                    } 
+                }
+                return;
+            }
+
+            // Relocate Logic
+            const relocateBtn = e.target.closest('.relocate-course-btn');
+            if (relocateBtn) {
+                e.stopPropagation();
+                const courseId = parseInt(relocateBtn.dataset.id);
+                const subfolder = relocateBtn.dataset.subfolder;
+                const course = courses.find(c => c.id === courseId);
+                if(!course) return;
+
+                try {
+                    const newHandle = await window.showDirectoryPicker();
+                    if (subfolder) {
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        course.subCourseData[subfolder].handle = newHandle;
+                        showToast(`Relocated subfolder: ${subfolder.split('/').pop()}`);
+                    } else {
+                        course.handle = newHandle;
+                        showToast(`Relocated main course: ${course.title}`);
+                    }
+                    await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                    await refreshCourse(courseId);
+                } catch(err) {
+                    if (err.name !== 'AbortError') console.error('Relocate failed', err);
+                }
+                return;
+            }
             
             const refreshBtn = e.target.closest('.refresh-course-btn');
-            if (refreshBtn) { e.stopPropagation(); const courseId = parseInt(refreshBtn.dataset.id); await refreshCourse(courseId, refreshBtn); }
+            if (refreshBtn) { 
+                e.stopPropagation(); 
+                const courseId = parseInt(refreshBtn.dataset.id); 
+                await refreshCourse(courseId, refreshBtn); 
+                return;
+            }
             
             const thumbPlaceholder = e.target.closest('.thumbnail-placeholder');
-            if (thumbPlaceholder && !removeBtn && !refreshBtn && !e.target.closest('.remove-thumbnail-btn') && !e.target.closest('.upload-notes-btn') && !e.target.closest('.upload-dpp-btn')) { document.getElementById('thumbnail-uploader').dataset.courseId = thumbPlaceholder.dataset.id; document.getElementById('thumbnail-uploader').click(); }
-            if (e.target.closest('.remove-thumbnail-btn')) { e.stopPropagation(); const btn = e.target.closest('.remove-thumbnail-btn'); const course = courses.find(c => c.id === parseInt(btn.dataset.id)); if (course) { delete course.thumbnail; getStore(STORE_NAME, 'readwrite').put(course); renderCourseGrid(); } }
+            if (thumbPlaceholder && !e.target.closest('.remove-thumbnail-btn')) { 
+                const uploader = document.getElementById('thumbnail-uploader');
+                uploader.dataset.courseId = thumbPlaceholder.dataset.id;
+                uploader.dataset.subfolder = thumbPlaceholder.dataset.subfolder || '';
+                uploader.click(); 
+                return;
+            }
+
+            if (e.target.closest('.remove-thumbnail-btn')) { 
+                e.stopPropagation(); 
+                const btn = e.target.closest('.remove-thumbnail-btn'); 
+                const courseId = parseInt(btn.dataset.id);
+                const subfolder = btn.dataset.subfolder;
+                const course = courses.find(c => c.id === courseId); 
+                if (course) { 
+                    if (subfolder) {
+                        if (course.subCourseData && course.subCourseData[subfolder]) {
+                            delete course.subCourseData[subfolder].thumbnail;
+                        }
+                    } else {
+                        delete course.thumbnail; 
+                    }
+                    getStore(STORE_NAME, 'readwrite').put(course); 
+                    
+                    if (subfolder) {
+                        const parentPath = getParentPath(subfolder);
+                        renderSubcourseView(courseId, parentPath);
+                    } else {
+                        renderCourseGrid(); 
+                    }
+                } 
+                return;
+            }
             
             const filterBtnReview = e.target.closest('#filter-btn-review');
             if(filterBtnReview) showFilteredCoursesView('review');
@@ -1490,12 +1840,55 @@
              if(e.target.closest('#back-to-notes-grid')) {
                 renderNotesCourseSelectionView();
             }
+            
+            const backToDashboardSub = e.target.closest('#back-to-dashboard-from-sub');
+            if (backToDashboardSub) {
+                const viewEl = document.getElementById('subcourse-view');
+                const currentPath = viewEl.dataset.currentPath || '';
+                if (currentPath === '') {
+                    switchView('dashboard-view');
+                } else {
+                    const parentPath = getParentPath(currentPath);
+                    const cId = parseInt(viewEl.dataset.courseId);
+                    await renderSubcourseView(cId, parentPath);
+                }
+                return;
+            }
+            
+            // Rating star click
+            const star = e.target.closest('.course-rating i.fa-star');
+            if (star) {
+                const ratingContainer = star.parentElement;
+                const extraInfo = ratingContainer.parentElement;
+                const courseId = parseInt(extraInfo.dataset.id);
+                const subfolder = extraInfo.dataset.subfolder;
+                
+                const course = courses.find(c => c.id === courseId);
+                if (!course) return;
 
+                const newRating = parseInt(star.dataset.value);
 
+                if (subfolder) {
+                    course.subCourseData = course.subCourseData || {};
+                    course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                    course.subCourseData[subfolder].rating = (course.subCourseData[subfolder].rating === newRating) ? 0 : newRating;
+                } else {
+                    course.rating = (course.rating === newRating) ? 0 : newRating; 
+                }
+
+                await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                
+                const currentRating = subfolder ? course.subCourseData[subfolder].rating : course.rating;
+                const allStars = ratingContainer.querySelectorAll('i');
+                allStars.forEach((s, i) => {
+                    s.classList.toggle('fas', currentRating > i);
+                    s.classList.toggle('far', currentRating <= i);
+                });
+            }
         });
         
         // --- Edit Title/Faculty Listeners ---
-        courseGrid.addEventListener('dblclick', (e) => {
+        document.body.addEventListener('dblclick', (e) => {
             const titleH3 = e.target.closest('.course-info h3');
             const facultyDiv = e.target.closest('.course-faculty');
 
@@ -1503,6 +1896,9 @@
                 const courseCard = titleH3.closest('.course-card');
                 if (!courseCard || titleH3.querySelector('input')) return;
                 
+                // Do not allow editing titles of split subfolders via UI, only main titles
+                if (courseCard.dataset.subfolder) return; 
+
                 const originalText = titleH3.textContent;
                 titleH3.innerHTML = `<input type="text" class="course-info-input" value="${originalText}" />`;
                 const input = titleH3.querySelector('input');
@@ -1510,7 +1906,7 @@
                 input.select();
 
                 const saveTitle = async () => {
-                    const courseId = parseInt(courseCard.querySelector('.thumbnail-placeholder').dataset.id);
+                    const courseId = parseInt(courseCard.dataset.id || courseCard.querySelector('.thumbnail-placeholder').dataset.id);
                     const course = courses.find(c => c.id === courseId);
                     if (!course) return;
 
@@ -1535,6 +1931,10 @@
             } else if (facultyDiv) {
                 if (facultyDiv.querySelector('input')) return;
             
+                const extraInfo = facultyDiv.parentElement;
+                const courseId = parseInt(extraInfo.dataset.id);
+                const subfolder = extraInfo.dataset.subfolder;
+                
                 const originalText = facultyDiv.textContent;
                 facultyDiv.innerHTML = `<input type="text" class="course-faculty-input" value="${originalText === 'N/A Faculty' ? '' : originalText}" />`;
                 const input = facultyDiv.querySelector('input');
@@ -1542,17 +1942,25 @@
                 input.select();
             
                 const saveFacultyName = async () => {
-                    const courseId = parseInt(facultyDiv.parentElement.dataset.id);
                     const course = courses.find(c => c.id === courseId);
                     if (!course) return;
 
                     const newName = input.value.trim();
                     facultyDiv.textContent = newName || 'N/A Faculty';
                     
-                     if (newName !== (course.facultyName || '')) {
-                         course.facultyName = newName || null;
-                         await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
-                     }
+                    if (subfolder) {
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        if (newName !== (course.subCourseData[subfolder].facultyName || '')) {
+                            course.subCourseData[subfolder].facultyName = newName || null;
+                            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                        }
+                    } else {
+                         if (newName !== (course.facultyName || '')) {
+                             course.facultyName = newName || null;
+                             await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                         }
+                    }
                 };
                 
                 input.addEventListener('blur', saveFacultyName);
@@ -1566,26 +1974,6 @@
             }
         });
 
-        courseGrid.addEventListener('click', async (e) => {
-            const star = e.target.closest('.course-rating i.fa-star');
-            if (!star) return;
-
-            const ratingContainer = star.parentElement;
-            const courseId = parseInt(ratingContainer.parentElement.dataset.id);
-            const course = courses.find(c => c.id === courseId);
-            if (!course) return;
-
-            const newRating = parseInt(star.dataset.value);
-            course.rating = (course.rating === newRating) ? 0 : newRating; 
-
-            await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
-            
-            const allStars = ratingContainer.querySelectorAll('i');
-            allStars.forEach((s, i) => {
-                s.classList.toggle('fas', course.rating > i);
-                s.classList.toggle('far', course.rating <= i);
-            });
-        });
 
         // --- Player View Listeners ---
         chapterListDiv.addEventListener('click', async (e) => {
@@ -1644,7 +2032,7 @@
                     courseTitle: currentCourse.title,
                     lectureDuration: lecture.duration
                 });
-                updateMenuProgress();
+                updateMenuProgress(currentSubfolder);
                 updateTotalTimeLeftDisplay();
             } else if (!e.target.classList.contains('lecture-title-input')) {
                 playVideo(lectureLi);
@@ -1667,19 +2055,25 @@
                 const newName = input.value.trim();
                 if (isChapter) {
                     const chapterDiv = titleDiv.closest('.chapter');
-                    const oldName = chapterDiv.dataset.chapterName;
-                    if (newName && newName !== oldName) {
+                    const oldName = chapterDiv.dataset.chapterName; // this retains the full path
+                    
+                    // We only want to rename the final segment of the folder
+                    if (newName && newName !== originalText) {
                         const chapter = currentCourse.chapters.find(c => c.name === oldName);
                         if(chapter) {
-                            chapter.name = newName;
+                            const oldSegments = oldName.split('/');
+                            oldSegments.pop();
+                            const newFullPath = oldSegments.length > 0 ? oldSegments.join('/') + '/' + newName : newName;
+                            
+                            chapter.name = newFullPath;
                             currentCourse.lectures.forEach(l => {
-                                if (l.chapter === oldName) l.chapter = newName;
+                                if (l.chapter === oldName) l.chapter = newFullPath;
                             });
                             await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
-                            chapterDiv.dataset.chapterName = newName;
+                            chapterDiv.dataset.chapterName = newFullPath;
                         }
                     }
-                    titleDiv.innerHTML = newName || oldName;
+                    titleDiv.innerHTML = newName || originalText;
                 } else {
                     const li = titleDiv.closest('li');
                     const lectureId = li.dataset.lectureId;
@@ -1715,7 +2109,7 @@
             if (file && lectureId) {
                 const progressData = getLectureProgress(currentCourse.id, lectureId);
                 await saveLectureProgress({ ...progressData, pdfHandle: file, pdfName: file.name, courseId: currentCourse.id, lectureId: lectureId });
-                await renderPlayer(currentCourse.id, lectureId, lastView);
+                await renderPlayer(currentCourse.id, lectureId, lastView, null, currentSubfolder);
                 await showMediaViewer(file, 'PDF', file.name, getLectureProgress(currentCourse.id, lectureId));
             }
             e.target.value = null;
@@ -1727,7 +2121,7 @@
             if (file && lectureId) {
                 const progressData = getLectureProgress(currentCourse.id, lectureId);
                 await saveLectureProgress({ ...progressData, assignmentHandle: file, assignmentName: file.name, assignmentType: file.type, courseId: currentCourse.id, lectureId: lectureId });
-                await renderPlayer(currentCourse.id, lectureId, lastView);
+                await renderPlayer(currentCourse.id, lectureId, lastView, null, currentSubfolder);
                 await showMediaViewer(file, 'Assignment', file.name, getLectureProgress(currentCourse.id, lectureId));
             }
             e.target.value = null;
@@ -1737,7 +2131,10 @@
             videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
             hideMediaViewer();
             const targetView = backToLibraryBtn.dataset.view || 'dashboard-view';
-            if (targetView.includes('review') || targetView.includes('practice')) {
+            if (targetView === 'subcourse-view') {
+                const path = getParentPath(currentSubfolder);
+                renderSubcourseView(currentCourse.id, path);
+            } else if (targetView.includes('review') || targetView.includes('practice')) {
                 showFilteredCoursesView(targetView.split('-')[0]);
             } else {
                 switchView(targetView);
@@ -1786,7 +2183,7 @@
                 await saveLectureProgress(lectureProgress);
                 hideMediaViewer();
                 updateMediaViewerToggleButton();
-                await renderPlayer(currentCourse.id, lectureId, lastView);
+                await renderPlayer(currentCourse.id, lectureId, lastView, null, currentSubfolder);
             }
         });
         
@@ -1795,7 +2192,7 @@
                 const lectureId = currentLectureLi.dataset.lectureId;
                 const currentTime = videoPlayer.currentTime;
                 saveLectureProgress({ courseId: currentCourse.id, lectureId: lectureId, currentTime: currentTime });
-                const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden') };
+                const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden'), subfolder: currentSubfolder };
                 sessionStorage.setItem('courseflixState', JSON.stringify(state));
             }
         }, 5000);
@@ -1804,7 +2201,7 @@
             if (document.querySelector('.view.active')?.id === 'player-view' && currentCourse && currentLectureLi) {
                 const lectureId = currentLectureLi.dataset.lectureId;
                 const currentTime = videoPlayer.currentTime;
-                const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden') };
+                const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden'), subfolder: currentSubfolder };
                 sessionStorage.setItem('courseflixState', JSON.stringify(state));
             }
         });
@@ -1837,7 +2234,35 @@
             }
         });
 
-        document.getElementById('thumbnail-uploader').addEventListener('change', (e) => { const file = e.target.files[0]; const courseId = parseInt(e.target.dataset.courseId); if (!file || !courseId) return; const reader = new FileReader(); reader.onload = async (event) => { const course = courses.find(c=>c.id === courseId); if(course) { course.thumbnail = event.target.result; getStore(STORE_NAME, 'readwrite').put(course); renderCourseGrid(); } }; reader.readAsDataURL(file); });
+        document.getElementById('thumbnail-uploader').addEventListener('change', (e) => { 
+            const file = e.target.files[0]; 
+            const courseId = parseInt(e.target.dataset.courseId); 
+            const subfolder = e.target.dataset.subfolder;
+            if (!file || !courseId) return; 
+
+            const reader = new FileReader(); 
+            reader.onload = async (event) => { 
+                const course = courses.find(c => c.id === courseId); 
+                if (course) { 
+                    if (subfolder) {
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        course.subCourseData[subfolder].thumbnail = event.target.result;
+                    } else {
+                        course.thumbnail = event.target.result; 
+                    }
+                    await new Promise(r => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = r);
+                    
+                    if (subfolder) {
+                        const parentPath = getParentPath(subfolder);
+                        await renderSubcourseView(courseId, parentPath);
+                    } else {
+                        await renderCourseGrid(); 
+                    }
+                } 
+            }; 
+            reader.readAsDataURL(file); 
+        });
         
         sidebarToggleBtn.addEventListener('click', () => {
             lectureMenu.classList.toggle('hidden');
@@ -1975,6 +2400,13 @@
                     delete cleanCourse.handle; 
                     delete cleanCourse.lectures; 
                     if(course.handle) cleanCourse.folderName = course.handle.name;
+                    
+                    // Backup custom subfolder handles (only names, handles don't serialize)
+                    if(cleanCourse.subCourseData) {
+                        for(const sub in cleanCourse.subCourseData) {
+                            delete cleanCourse.subCourseData[sub].handle;
+                        }
+                    }
                     
                     if (course.thumbnail) {
                         const thumbBlob = base64ToBlob(course.thumbnail);
@@ -2935,7 +3367,7 @@
                     }
                     const courseExists = courses.some(c => c.id === savedState.courseId);
                     if (courseExists) {
-                      await renderPlayer(savedState.courseId, savedState.lectureId, savedState.lastView, savedState.currentTime);
+                      await renderPlayer(savedState.courseId, savedState.lectureId, savedState.lastView, savedState.currentTime, savedState.subfolder);
                       return;
                     }
                 }
@@ -2947,4 +3379,3 @@
     </script>
 </body>
 </html>
-
