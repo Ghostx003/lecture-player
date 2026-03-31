@@ -363,6 +363,59 @@
         #dpp-upload-sidebar-toggle-btn i { transition: transform 0.3s; }
         #dpp-upload-sidebar-toggle-btn.collapsed i { transform: rotate(180deg); }
 
+        /* --- DOUBTS VIEW --- */
+        #doubts-course-grid, #doubts-specific-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
+        #doubts-detail-container { flex-direction: column; overflow: hidden; height: 100%; width: 100%; display: flex; }
+        .doubt-card { position: relative; cursor: pointer; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-primary); background-color: var(--bg-secondary); }
+        html[data-theme="dark"] .doubt-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -2px var(--accent-primary_translucent); transform: translateY(-2px); transition: all 0.2s ease; }
+        html[data-theme="light"] .doubt-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: all 0.2s ease; }
+        .doubt-card img { width: 100%; height: 200px; object-fit: cover; display: block; background-color: var(--bg-tertiary); }
+        .doubt-meta { padding: 12px; }
+        .doubt-timestamp { font-size: 0.8rem; color: var(--accent-primary); font-weight: 600; cursor: pointer; display: inline-block; padding: 4px 8px; background: var(--bg-tertiary); border-radius: 4px;}
+        .doubt-timestamp:hover { text-decoration: underline; background: var(--border-primary); }
+        .delete-doubt-btn { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.7); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.2s, background-color 0.2s; }
+        .doubt-card:hover .delete-doubt-btn { opacity: 1; }
+        .delete-doubt-btn:hover { background: var(--accent-danger); }
+        
+        #doubt-full-overlay { position: fixed; inset: 0; background-color: rgba(0,0,0,0.9); z-index: 2000; display: flex; flex-direction: row; }
+        #doubt-full-overlay.hidden { display: none !important; }
+        .doubt-full-left { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 2rem; position: relative; }
+        .doubt-full-left img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .doubt-full-right { width: 350px; background-color: var(--bg-secondary); border-left: 1px solid var(--border-primary); display: flex; flex-direction: column; flex-shrink: 0; }
+        .doubt-right-header { padding: 1rem; border-bottom: 1px solid var(--border-primary); display: flex; justify-content: space-between; align-items: center; }
+        .doubt-right-header h3 { margin: 0; }
+        .close-doubt-full-btn { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.5rem; transition: color 0.2s; }
+        .close-doubt-full-btn:hover { color: var(--accent-danger); }
+        
+        .doubt-comments-section { flex-grow: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 1rem; }
+        .doubt-comment-box { width: 100%; min-height: 100px; resize: vertical; border-radius: 8px; border: 1px solid var(--border-secondary); background-color: var(--bg-tertiary); color: var(--text-primary); padding: 12px; font-family: inherit; margin-bottom: 10px; }
+        
+        .doubt-tags-container { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+        .doubt-tag { background-color: var(--bg-tertiary); color: var(--text-primary); padding: 4px 10px; border-radius: 16px; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; border: 1px solid var(--border-secondary); }
+        .doubt-tag .remove-tag { cursor: pointer; color: var(--text-secondary); transition: color 0.2s; }
+        .doubt-tag .remove-tag:hover { color: var(--accent-danger); }
+        .doubt-add-tag-group { display: flex; gap: 6px; }
+        .doubt-tag-input { flex-grow: 1; border-radius: 6px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); color: var(--text-primary); padding: 6px 10px; font-size: 0.85rem; }
+        .doubt-save-btn { width: 100%; margin-top: auto; padding: 12px; background-color: var(--accent-primary); color: white; border: none; cursor: pointer; font-weight: 600; text-align: center; font-size: 1rem; transition: background-color 0.2s; }
+        .doubt-save-btn:hover { background-color: var(--accent-hover); }
+        .doubt-green-text { color: var(--accent-primary); font-weight: 600; font-size: 0.85rem; }
+
+        .course-ignore-container { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: var(--text-secondary); cursor: pointer; user-select: none; }
+        .course-ignore-cb { appearance: none; -webkit-appearance: none; width: 14px; height: 14px; border: 1px solid var(--border-secondary); border-radius: 3px; background-color: var(--bg-primary); cursor: pointer; display: inline-flex; justify-content: center; align-items: center; transition: all 0.2s; position: relative; }
+        .course-ignore-cb:checked { border-color: var(--accent-danger); background-color: var(--bg-tertiary); }
+        .course-ignore-cb:checked::after { content: '\f00d'; font-family: 'Font Awesome 5 Free'; font-weight: 900; font-size: 10px; color: var(--accent-danger); position: absolute; }
+        
+        #total-time-left-display { cursor: pointer; transition: color 0.2s, text-shadow 0.2s; }
+        #total-time-left-display:hover { color: var(--accent-primary); text-shadow: 0 0 8px rgba(32, 201, 151, 0.4); }
+        
+        #completion-calculator-modal .modal-content-scrollable { display: flex; flex-direction: column; gap: 1rem; }
+        .calc-input-group { display: flex; flex-direction: column; gap: 4px; }
+        .calc-input-group label { font-size: 0.9rem; color: var(--text-secondary); }
+        .calc-input-group input { background-color: var(--bg-tertiary); border: 1px solid var(--border-primary); color: var(--text-primary); padding: 10px; border-radius: 6px; font-size: 1rem; }
+        .calc-results-panel { background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem; margin-top: 1rem; border: 1px solid var(--border-secondary); text-align: center; }
+        .calc-results-panel h3 { margin: 0 0 0.5rem 0; color: var(--text-primary); font-size: 1.2rem; }
+        .calc-big-date { font-size: 2rem; color: var(--accent-primary); font-weight: 700; margin-bottom: 0.5rem; }
+        .calc-meta-stats { font-size: 0.9rem; color: var(--text-secondary); }
     </style>
 </head>
 <body>
@@ -376,6 +429,7 @@
             <a href="#" class="nav-link" data-view="practice-view">Practice</a>
             <a href="#" class="nav-link" data-view="dpp-view">DPP</a>
             <a href="#" class="nav-link" data-view="notes-view">Notes</a>
+            <a href="#" class="nav-link" data-view="doubts-view">Doubts</a>
         </div>
         <div id="total-time-left-display" class="info-display"></div>
         <button id="add-course-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Course</button>
@@ -391,6 +445,33 @@
             <h2 id="subcourse-parent-title" style="margin-left: 1rem; font-size: 1.25rem;"></h2>
         </div>
         <main id="subcourse-grid" class="grid-container"></main>
+    </div>
+
+    <div id="completion-calculator-modal" class="modal-overlay hidden">
+        <div class="modal-content" style="max-width: 450px;">
+            <button class="close-modal-btn" title="Close">&times;</button>
+            <h2>Completion Calculator</h2>
+            <p style="color: var(--text-secondary); margin: -0.5rem 0 1rem 0;">Estimate when you'll finish all your un-ignored lectures.</p>
+            
+            <div class="modal-content-scrollable">
+                <div class="calc-input-group">
+                    <label>Daily Study Hours</label>
+                    <input type="number" id="calc-daily-hours" value="7" min="1" max="24" step="0.5">
+                </div>
+                <div class="calc-input-group">
+                    <label>Average Playback Speed</label>
+                    <input type="number" id="calc-playback-speed" value="1.5" min="0.5" max="5" step="0.1">
+                </div>
+                
+                <div class="calc-results-panel">
+                    <h3>Realistic Finish Date:</h3>
+                    <div class="calc-big-date" id="calc-result-date">Calculating...</div>
+                    <div class="calc-meta-stats" id="calc-result-stats">...</div>
+                </div>
+            </div>
+            
+            <button class="primary-btn" id="run-calculator-btn" style="width: 100%; margin-top: 1rem;">Update Calculation</button>
+        </div>
     </div>
     
     <div id="upload-view" class="view">
@@ -491,6 +572,47 @@
         </div>
     </div>
 
+    <div id="doubts-view" class="view">
+        <div id="doubts-list-container" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+            <main id="doubts-course-grid" class="grid-container"></main>
+        </div>
+        <div id="doubts-detail-container" class="hidden">
+            <div class="view-header">
+                <a class="back-link" id="back-to-doubts-grid" style="cursor: pointer; color: var(--accent-primary); font-weight: 500;">&larr; Back to Doubts Folders</a>
+                <h2 id="doubts-detail-title" style="margin-left: 1rem; font-size: 1.25rem;"></h2>
+            </div>
+            <main id="doubts-specific-grid" class="grid-container"></main>
+        </div>
+    </div>
+
+    <!-- Doubt Full Overlay -->
+    <div id="doubt-full-overlay" class="hidden">
+        <div class="doubt-full-left">
+            <img id="doubt-full-img" src="" alt="Doubt Screenshot">
+        </div>
+        <div class="doubt-full-right">
+            <div class="doubt-right-header">
+                <h3>Doubt Details</h3>
+                <button class="close-doubt-full-btn" title="Minimize / Close"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="doubt-comments-section">
+                <div>
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-secondary);">Comment</h4>
+                    <textarea id="doubt-comment-input" class="doubt-comment-box" placeholder="Add your query or comment here..."></textarea>
+                </div>
+                <div>
+                    <h4 style="margin: 0 0 8px 0; font-size: 0.9rem; color: var(--text-secondary);">Tags</h4>
+                    <div id="doubt-tags-list" class="doubt-tags-container"></div>
+                    <div class="doubt-add-tag-group">
+                        <input type="text" id="doubt-tag-input" class="doubt-tag-input" placeholder="Add a tag...">
+                        <button id="add-doubt-tag-btn" class="primary-btn" style="padding: 6px 12px;"><i class="fas fa-plus"></i></button>
+                    </div>
+                </div>
+            </div>
+            <button id="doubt-save-btn" class="doubt-save-btn">Save Changes</button>
+        </div>
+    </div>
+
     <div id="player-view" class="view">
         <div id="lecture-menu">
             <div class="menu-header">
@@ -576,10 +698,11 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const DB_NAME = 'CourseFlixDB';
-        const DB_VERSION = 9; // Incremented version for new object store
+        const DB_VERSION = 10; // Incremented version for doubts store
         const STORE_NAME = 'courses';
         const PROGRESS_STORE = 'progress';
         const DPP_STORE = 'dpps'; // New store for DPPs
+        const DOUBTS_STORE = 'doubts';
         let db;
 
         // --- Database Helper ---
@@ -593,6 +716,7 @@
                     if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
                     if (!db.objectStoreNames.contains(PROGRESS_STORE)) db.createObjectStore(PROGRESS_STORE, { keyPath: 'id' });
                     if (!db.objectStoreNames.contains(DPP_STORE)) db.createObjectStore(DPP_STORE, { keyPath: 'id', autoIncrement: true });
+                    if (!db.objectStoreNames.contains(DOUBTS_STORE)) db.createObjectStore(DOUBTS_STORE, { keyPath: 'id', autoIncrement: true });
                 };
             });
         }
@@ -736,11 +860,39 @@
         
         function updateTotalTimeLeftDisplay() {
             let totalSecondsLeft = 0;
+            let pendingLectures = 0;
             courses.forEach(course => {
-                const progress = calculateCourseProgress(course);
-                totalSecondsLeft += progress.remainingDuration;
+                if (course.isIgnored) return;
+                
+                if (!course.lectures) {
+                    totalSecondsLeft += (course.totalDuration || 0);
+                    pendingLectures += (course.videoCount || 0);
+                    return;
+                }
+
+                course.lectures.forEach(lecture => {
+                    let isSubfolderIgnored = false;
+                    if (course.isSplitView && course.subCourseData) {
+                        for (const sub of Object.keys(course.subCourseData)) {
+                             if (course.subCourseData[sub].isIgnored && (lecture.chapter === sub || lecture.chapter.startsWith(sub + '/'))) {
+                                  isSubfolderIgnored = true;
+                                  break;
+                             }
+                        }
+                    }
+                    if (isSubfolderIgnored) return;
+
+                    const progress = getLectureProgress(course.id, lecture.id);
+                    if (!progress.completed) {
+                        totalSecondsLeft += (lecture.duration || 0);
+                        pendingLectures++;
+                    }
+                });
             });
             
+            totalTimeDisplay.dataset.seconds = totalSecondsLeft;
+            totalTimeDisplay.dataset.lectures = pendingLectures;
+
             if (totalSecondsLeft > 0) {
                 totalTimeDisplay.textContent = formatTotalDuration(totalSecondsLeft);
                 totalTimeDisplay.style.display = 'inline-flex';
@@ -768,6 +920,7 @@
             }
             if (viewId === 'dpp-view') renderDppCourseSelectionView();
             if (viewId === 'notes-view') renderNotesCourseSelectionView();
+            if (viewId === 'doubts-view') renderDoubtsCourseSelectionView();
             
             if (viewId !== 'player-view') {
                 sessionStorage.removeItem('courseflixState');
@@ -861,6 +1014,8 @@
                         course.lectures = courseData.lectures;
                         course.totalDuration = courseData.totalDuration;
                         course.chapters = courseData.chapters;
+                        // Save back to local DB so it is not re-scanned on next page load
+                        await new Promise(r => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = r);
                     } catch (e) {
                         console.error(`Failed to scan course "${course.title}"`, e);
                     }
@@ -886,11 +1041,16 @@
                         <button class="remove-course-btn" data-id="${course.id}" title="Remove Course"><i class="fas fa-trash"></i></button>
                     </div>
                     <div class="course-info">
-                        <div>
+                         <div>
                             <h3 title="${course.title} (Double-click to edit)">${course.title}</h3>
                             <div class="course-extra-info" data-id="${course.id}">
                                 <div class="course-faculty" title="Double-click to edit faculty">${course.facultyName || 'N/A Faculty'}</div>
-                                <div class="course-rating">${ratingStarsHTML}</div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                    <label class="course-ignore-container" title="Ignore this course from your global remaining time">
+                                        <input type="checkbox" class="course-ignore-cb" data-id="${course.id}" ${course.isIgnored ? 'checked' : ''}> Ignore
+                                    </label>
+                                    <div class="course-rating">${ratingStarsHTML}</div>
+                                </div>
                             </div>
                             <p class="course-meta">${course.videoCount || 0} videos</p>
                             <div class="course-duration-wrapper">
@@ -1018,7 +1178,12 @@
                             <h3 title="${folderNameOnly}">${folderNameOnly}</h3>
                             <div class="course-extra-info subcourse-extra" data-id="${course.id}" data-subfolder="${fullPath}">
                                 <div class="course-faculty" title="Double-click to edit faculty">${faculty}</div>
-                                <div class="course-rating">${ratingStarsHTML}</div>
+                                <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px;">
+                                    <label class="course-ignore-container" title="Ignore this topic from your global remaining time">
+                                        <input type="checkbox" class="course-ignore-cb" data-id="${courseId}" data-subfolder="${fullPath}" ${subData.isIgnored ? 'checked' : ''}> Ignore
+                                    </label>
+                                    <div class="course-rating">${ratingStarsHTML}</div>
+                                </div>
                             </div>
                             <p class="course-meta">${total} videos</p>
                             <div class="course-duration-wrapper">
@@ -1641,7 +1806,7 @@
             videoPlayer.muted = false;
             unmuteBtn.classList.add('hidden');
 
-            if (e.target.closest('.enter-course-btn')) { 
+            if (e.target.closest('.enter-course-btn') && !e.target.closest('#dpp-course-grid') && !e.target.closest('#notes-course-grid')) { 
                 const btn = e.target.closest('.enter-course-btn');
                 const courseId = parseInt(btn.dataset.id);
                 const subfolder = btn.dataset.subfolder;
@@ -2515,8 +2680,8 @@
             importModalContent.innerHTML = `
                 <button class="close-modal-btn" title="Close">&times;</button>
                 <h2>Link Course Folders</h2>
-                <p style="color: var(--text-secondary); margin: -0.5rem 0 0.5rem 0;">Select a master folder to link all courses automatically, or link them individually.</p>
-                <button id="select-master-folder" class="secondary-btn"><i class="fas fa-folder-tree"></i> Select Master Folder</button>
+                <p style="color: var(--text-secondary); margin: -0.5rem 0 0.5rem 0;">Select a master folder to link all courses automatically, or link them individually. You can add multiple master folders.</p>
+                <button id="select-master-folder" class="secondary-btn"><i class="fas fa-folder-tree"></i> Add Auto-Link Master Folder</button>
                 <div class="modal-content-scrollable" style="margin-top:1rem;">
                     ${courseLinksHTML}
                 </div>
@@ -2710,7 +2875,7 @@
              }
 
             const view = document.querySelector('.view.active'); 
-            if (!view || !['player-view', 'dpp-view', 'notes-view'].includes(view.id)) return;
+            if (!view || !['player-view', 'dpp-view', 'notes-view', 'doubts-view'].includes(view.id)) return;
             
             userInteracted = true; 
             videoPlayer.muted = false; 
@@ -2719,6 +2884,7 @@
             let shouldPreventDefault = true;
             switch(e.key) { 
                 case ' ': if (view.id === 'player-view') playPauseBtn.click(); break;
+                case 's': if (view.id === 'player-view' && currentCourse && currentLectureLi) captureDoubt(); break;
                 case 'ArrowRight': if (view.id === 'player-view') videoPlayer.currentTime += 5; break;
                 case 'ArrowLeft': if (view.id === 'player-view') videoPlayer.currentTime -= 5; break; 
                 case 'ArrowUp': if (view.id === 'player-view') videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break;
@@ -3350,6 +3516,290 @@
         });
 
 
+        // --- Doubts Functions ---
+        async function captureDoubt() {
+            if (!currentCourse || !currentLectureLi || !videoPlayer || videoPlayer.readyState < 2) return;
+            try {
+                const canvas = document.createElement('canvas');
+                canvas.width = videoPlayer.videoWidth;
+                canvas.height = videoPlayer.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(videoPlayer, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
+                
+                const lectureId = currentLectureLi.dataset.lectureId;
+                const timestamp = videoPlayer.currentTime;
+                const d = {
+                    courseId: currentCourse.id,
+                    subfolder: currentSubfolder || '',
+                    lectureId: lectureId,
+                    timestamp: timestamp,
+                    image: dataUrl,
+                    comment: '',
+                    tags: [],
+                    createdAt: Date.now()
+                };
+                
+                await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').add(d).onsuccess = r);
+                showToast("Doubt Screenshot Captured!");
+            } catch (err) {
+                console.error("Doubt capture failed:", err);
+                showToast("Could not capture screenshot.", true);
+            }
+        }
+
+        async function renderDoubtsCourseSelectionView() {
+            nav.classList.remove('hidden');
+            document.getElementById('doubts-detail-container').classList.add('hidden');
+            const doubtsListContainer = document.getElementById('doubts-list-container');
+            doubtsListContainer.classList.remove('hidden');
+            const grid = document.getElementById('doubts-course-grid');
+            grid.innerHTML = '';
+            
+            const allDoubts = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+            if (allDoubts.length === 0) {
+                grid.innerHTML = '<p id="no-content-message">No doubts captured yet. Press "s" while playing a video to take a screenshot.</p>';
+                return;
+            }
+            
+            const grouped = {};
+            allDoubts.forEach(d => {
+                const key = `${d.courseId}_|_${d.subfolder}`;
+                if (!grouped[key]) grouped[key] = { items: [], courseId: d.courseId, subfolder: d.subfolder };
+                grouped[key].items.push(d);
+            });
+            
+            for (const key in grouped) {
+                const group = grouped[key];
+                const course = courses.find(c => c.id === group.courseId);
+                if (!course) continue;
+                
+                const count = group.items.length;
+                let thumb = course.thumbnail;
+                let hierarchyText = course.title;
+                
+                if (group.subfolder) {
+                    hierarchyText += ` &raquo; ${group.subfolder.split('/').pop()}`;
+                    if (course.subCourseData && course.subCourseData[group.subfolder] && course.subCourseData[group.subfolder].thumbnail) {
+                        thumb = course.subCourseData[group.subfolder].thumbnail;
+                    }
+                }
+                
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${thumb ? 'has-thumbnail' : ''}" style="${thumb ? `background-image: url('${thumb}')` : ''}">
+                         <i class="fas fa-question-circle" style="font-size: 3rem;"></i>
+                    </div>
+                    <div class="course-info" style="justify-content: space-between;">
+                        <div>
+                            <h3 style="font-size: 1.1rem;">${hierarchyText}</h3>
+                            <div class="doubt-green-text" style="margin-top: 8px;">${count} doubts</div>
+                        </div>
+                        <button class="primary-btn enter-doubt-btn" style="margin-top: 12px; width: 100%;" data-c="${group.courseId}" data-s="${group.subfolder}">Enter</button>
+                    </div>`;
+                grid.appendChild(card);
+            }
+        }
+        
+        async function renderDoubtsDetailView(courseId, subfolder) {
+            document.getElementById('doubts-list-container').classList.add('hidden');
+            const detailContainer = document.getElementById('doubts-detail-container');
+            detailContainer.classList.remove('hidden');
+            
+            const course = courses.find(c => c.id === courseId);
+            const titleEl = document.getElementById('doubts-detail-title');
+            titleEl.innerHTML = course ? course.title + (subfolder ? ` &raquo; ${subfolder.split('/').pop()}` : '') : 'Doubts';
+            
+            const grid = document.getElementById('doubts-specific-grid');
+            grid.innerHTML = '';
+            
+            const allDoubts = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+            const groupDoubts = allDoubts.filter(d => d.courseId === courseId && d.subfolder === subfolder);
+            
+            if (groupDoubts.length === 0) {
+                 grid.innerHTML = '<p id="no-content-message">No doubts found for this folder.</p>';
+                 return;
+            }
+            
+            groupDoubts.sort((a,b) => b.createdAt - a.createdAt).forEach(d => {
+                const card = document.createElement('div');
+                card.className = 'doubt-card';
+                card.dataset.id = d.id;
+                card.innerHTML = `
+                    <button class="delete-doubt-btn" data-id="${d.id}" title="Delete Doubt"><i class="fas fa-trash"></i></button>
+                    <img src="${d.image}" alt="Doubt Snapshot">
+                    <div class="doubt-meta">
+                        <span class="doubt-timestamp" data-id="${d.id}" data-c="${d.courseId}" data-s="${d.subfolder}" data-l="${d.lectureId}" data-t="${d.timestamp}">
+                            <i class="fas fa-play-circle"></i> ${formatTime(d.timestamp)}
+                        </span>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+        
+        let activeDoubtId = null;
+        async function openDoubtFullscreen(doubtId) {
+            const d = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').get(parseInt(doubtId)).onsuccess = e => r(e.target.result));
+            if (!d) return;
+            activeDoubtId = d.id;
+            
+            document.getElementById('doubt-full-img').src = d.image;
+            document.getElementById('doubt-comment-input').value = d.comment || '';
+            renderDoubtTags(d.tags || []);
+            document.getElementById('doubt-tag-input').value = '';
+            
+            document.getElementById('doubt-full-overlay').classList.remove('hidden');
+        }
+        
+        function renderDoubtTags(tags) {
+            const list = document.getElementById('doubt-tags-list');
+            list.innerHTML = tags.map(tag => `
+                <div class="doubt-tag">
+                    <span>${tag}</span>
+                    <i class="fas fa-times remove-tag" data-tag="${tag}"></i>
+                </div>
+            `).join('');
+        }
+        
+        // Doubts View Event Listeners
+        document.body.addEventListener('click', async (e) => {
+            if (e.target.closest('.enter-doubt-btn')) {
+                const btn = e.target.closest('.enter-doubt-btn');
+                renderDoubtsDetailView(parseInt(btn.dataset.c), btn.dataset.s);
+            }
+            if (e.target.closest('#back-to-doubts-grid')) {
+                renderDoubtsCourseSelectionView();
+            }
+            if (e.target.closest('.doubt-card') && !e.target.closest('.delete-doubt-btn') && !e.target.closest('.doubt-timestamp')) {
+                activeDoubtId = e.target.closest('.doubt-card').dataset.id;
+                openDoubtFullscreen(activeDoubtId);
+            }
+            if (e.target.closest('.close-doubt-full-btn')) {
+                document.getElementById('doubt-full-overlay').classList.add('hidden');
+                activeDoubtId = null;
+            }
+            if (e.target.closest('.delete-doubt-btn')) {
+                const id = parseInt(e.target.closest('.delete-doubt-btn').dataset.id);
+                if (confirm('Are you sure you want to delete this doubt snapshot?')) {
+                    await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').delete(id).onsuccess = r);
+                    // Rerender the active view logic
+                    if (!document.getElementById('doubts-detail-container').classList.contains('hidden')) {
+                         const headerSpan = document.querySelector('#doubt-timestamp'); // hacky but just re-render is better
+                         const backBtn = document.getElementById('back-to-doubts-grid');
+                         // We can just rely on user re-entering or refresh group
+                         const courseId = parseInt(document.querySelector('.doubt-timestamp')?.dataset.c);
+                         if(courseId) renderDoubtsDetailView(courseId, document.querySelector('.doubt-timestamp').dataset.s);
+                         else renderDoubtsCourseSelectionView();
+                    } else renderDoubtsCourseSelectionView();
+                }
+            }
+            if (e.target.closest('.doubt-timestamp')) {
+                const el = e.target.closest('.doubt-timestamp');
+                const courseId = parseInt(el.dataset.c);
+                const lectureId = el.dataset.l;
+                const timestamp = parseFloat(el.dataset.t);
+                const subfolder = el.dataset.s;
+                switchView('player-view');
+                await renderPlayer(courseId, lectureId, 'doubts-view', timestamp, subfolder);
+            }
+            if (e.target.closest('.remove-tag')) {
+                const tagToRemove = e.target.closest('.remove-tag').dataset.tag;
+                if (!activeDoubtId) return;
+                const d = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').get(activeDoubtId).onsuccess = e => r(e.target.result));
+                if (d) {
+                    d.tags = d.tags.filter(t => t !== tagToRemove);
+                    await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').put(d).onsuccess = r);
+                    renderDoubtTags(d.tags);
+                }
+            }
+            if (e.target.closest('#add-doubt-tag-btn')) {
+                const input = document.getElementById('doubt-tag-input');
+                const tag = input.value.trim();
+                if (tag && activeDoubtId) {
+                    const d = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').get(activeDoubtId).onsuccess = e => r(e.target.result));
+                    if (d) {
+                        d.tags = d.tags || [];
+                        if (!d.tags.includes(tag)) {
+                            d.tags.push(tag);
+                            await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').put(d).onsuccess = r);
+                            renderDoubtTags(d.tags);
+                        }
+                        input.value = '';
+                    }
+                }
+            }
+            if (e.target.closest('#doubt-save-btn')) {
+                if (activeDoubtId) {
+                    const d = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').get(activeDoubtId).onsuccess = e => r(e.target.result));
+                    if (d) {
+                        d.comment = document.getElementById('doubt-comment-input').value;
+                        await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').put(d).onsuccess = r);
+                        showToast('Changes Saved!');
+                    }
+                }
+            }
+        });
+
+        // --- Ignore Checkbox Logic ---
+        document.body.addEventListener('change', async (e) => {
+            if (e.target.classList.contains('course-ignore-cb')) {
+                const courseId = parseInt(e.target.dataset.id);
+                const subfolder = e.target.dataset.subfolder;
+                const course = courses.find(c => c.id === courseId);
+                
+                if (course) {
+                    if (subfolder) {
+                        course.subCourseData = course.subCourseData || {};
+                        course.subCourseData[subfolder] = course.subCourseData[subfolder] || {};
+                        course.subCourseData[subfolder].isIgnored = e.target.checked;
+                    } else {
+                        course.isIgnored = e.target.checked;
+                    }
+                    await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(course).onsuccess = resolve);
+                    updateTotalTimeLeftDisplay(); // Re-calculate immediately
+                }
+            }
+        });
+
+        // --- Completion Calculator Logic ---
+        document.getElementById('total-time-left-display').addEventListener('click', () => {
+             const modal = document.getElementById('completion-calculator-modal');
+             modal.querySelector('.close-modal-btn').onclick = () => modal.classList.add('hidden');
+             modal.classList.remove('hidden');
+             runCompletionCalculator();
+        });
+
+        document.getElementById('run-calculator-btn').addEventListener('click', runCompletionCalculator);
+        document.getElementById('calc-daily-hours').addEventListener('input', runCompletionCalculator);
+        document.getElementById('calc-playback-speed').addEventListener('input', runCompletionCalculator);
+        
+        function runCompletionCalculator() {
+             const displayEl = document.getElementById('total-time-left-display');
+             const totalSeconds = parseFloat(displayEl.dataset.seconds || 0);
+             const pendingLectures = parseInt(displayEl.dataset.lectures || 0);
+             
+             const dailyHours = parseFloat(document.getElementById('calc-daily-hours').value) || 7;
+             const speed = parseFloat(document.getElementById('calc-playback-speed').value) || 1.5;
+             
+             if (totalSeconds === 0) {
+                 document.getElementById('calc-result-date').innerText = "Already Finished!";
+                 document.getElementById('calc-result-stats').innerText = "0 pending lectures.";
+                 return;
+             }
+             
+             const totalHours = totalSeconds / 3600;
+             const adjustedHours = totalHours / speed;
+             const daysRequired = adjustedHours / dailyHours;
+             
+             const finishDate = new Date(Date.now() + (daysRequired * 24 * 60 * 60 * 1000));
+             const options = { day: 'numeric', month: 'long', year: 'numeric' };
+             const dateString = finishDate.toLocaleDateString('en-GB', options);
+             
+             document.getElementById('calc-result-date').innerText = dateString;
+             document.getElementById('calc-result-stats').innerText = `${pendingLectures} pending lectures (${Math.ceil(adjustedHours)} hrs adjusted view time).`;
+        }
+        
         // --- Init ---
         async function main() {
             if (!window.indexedDB || !window.showDirectoryPicker) { document.body.innerHTML = "<h1>Browser Not Supported</h1><p>Please use a modern browser like Google Chrome or Microsoft Edge that supports the File System Access API and IndexedDB.</p>"; return; }
