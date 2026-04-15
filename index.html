@@ -72,7 +72,7 @@
 
         /* --- GRIDS --- */
         .grid-container { overflow-y: auto; flex-grow: 1; padding: 24px; }
-        #course-grid, #subcourse-grid, #upload-course-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
+        #course-grid, #subcourse-grid, #upload-course-grid, #upload-subfolder-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;
         }
         #review-grid, #practice-grid {
@@ -302,6 +302,50 @@
         }
         .bookmark-dot:hover { transform: translate(-50%, -50%) scale(1.4); }
 
+        /* --- AUTOPLAY NEXT OVERLAY --- */
+        #autoplay-overlay {
+            position: absolute; bottom: 90px; right: 24px;
+            background: rgba(10, 10, 10, 0.92); border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 14px; padding: 18px 22px; z-index: 30;
+            display: none; flex-direction: column; gap: 12px;
+            min-width: 300px; max-width: 400px;
+            backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+            animation: autoplaySlideUp 0.35s ease-out;
+        }
+        #autoplay-overlay.visible { display: flex; }
+        @keyframes autoplaySlideUp {
+            from { opacity: 0; transform: translateY(24px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .autoplay-header { font-size: 0.7rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+        .autoplay-title { font-size: 1rem; color: white; font-weight: 600; line-height: 1.4; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 4px; }
+        .autoplay-actions { display: flex; gap: 10px; align-items: center; }
+        #autoplay-play-btn {
+            flex-grow: 1; background-color: white; color: #111; border: none;
+            padding: 10px 18px; border-radius: 8px; font-size: 0.9rem; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            transition: background-color 0.15s, transform 0.1s;
+        }
+        #autoplay-play-btn:hover { background-color: #e0e0e0; transform: scale(1.02); }
+        #autoplay-cancel-btn {
+            background: none; border: 1px solid rgba(255,255,255,0.25); color: rgba(255,255,255,0.8);
+            padding: 10px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+            cursor: pointer; transition: border-color 0.2s, color 0.2s;
+        }
+        #autoplay-cancel-btn:hover { border-color: white; color: white; }
+        .autoplay-countdown {
+            width: 36px; height: 36px; position: relative; flex-shrink: 0;
+        }
+        .autoplay-countdown svg { transform: rotate(-90deg); width: 36px; height: 36px; }
+        .autoplay-countdown circle { fill: none; stroke-width: 2.5; }
+        .autoplay-countdown .bg-circle { stroke: rgba(255,255,255,0.15); }
+        .autoplay-countdown .fg-circle { stroke: var(--accent-primary); stroke-linecap: round; }
+        .autoplay-countdown-number {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 0.85rem; font-weight: 700; color: white;
+        }
+
         #no-content-message { text-align: center; color: var(--text-secondary); padding: 50px; }
         .hidden { display: none !important; }
         .file-controls { display: flex; gap: 5px; align-items: center; }
@@ -476,6 +520,13 @@
     
     <div id="upload-view" class="view">
         <main id="upload-course-grid" class="grid-container"></main>
+        <div id="upload-subfolder-view" class="hidden">
+            <div class="view-header">
+                <a class="back-link" id="back-to-upload-from-subfolder" style="cursor: pointer; color: var(--accent-primary); font-weight: 500;">&larr; Back to Upload</a>
+                <h2 id="upload-subfolder-title" style="margin-left: 1rem; font-size: 1.25rem;"></h2>
+            </div>
+            <main id="upload-subfolder-grid" class="grid-container"></main>
+        </div>
         <div id="upload-detail-view" class="hidden">
             <div id="upload-lecture-list-container">
                 <div id="upload-lecture-list-header">
@@ -638,6 +689,18 @@
                     <button id="unmute-btn" class="hidden"><i class="fas fa-volume-mute"></i> Click to Unmute</button>
                     <div class="seek-overlay" id="left-seek-overlay"><i class="fas fa-backward"></i></div>
                     <div class="seek-overlay" id="right-seek-overlay"><i class="fas fa-forward"></i></div>
+                    <div id="autoplay-overlay">
+                        <div class="autoplay-header">Up Next</div>
+                        <div class="autoplay-title" id="autoplay-next-title"></div>
+                        <div class="autoplay-actions">
+                            <button id="autoplay-play-btn"><i class="fas fa-play"></i> Play Now</button>
+                            <div class="autoplay-countdown">
+                                <svg viewBox="0 0 36 36"><circle class="bg-circle" cx="18" cy="18" r="15.5"></circle><circle class="fg-circle" id="autoplay-countdown-circle" cx="18" cy="18" r="15.5"></circle></svg>
+                                <span class="autoplay-countdown-number" id="autoplay-countdown-text">5</span>
+                            </div>
+                            <button id="autoplay-cancel-btn">Cancel</button>
+                        </div>
+                    </div>
                     <div class="video-controls-container">
                         <div class="timeline-container">
                             <input type="range" class="timeline" value="0" step="0.1">
@@ -915,6 +978,7 @@
             if (viewId === 'dashboard-view') renderCourseGrid();
             if (viewId === 'upload-view') {
                  document.getElementById('upload-course-grid').classList.remove('hidden');
+                 document.getElementById('upload-subfolder-view').classList.add('hidden');
                  document.getElementById('upload-detail-view').classList.add('hidden');
                  renderUploadView();
             }
@@ -1311,6 +1375,7 @@
                 const card = document.createElement('div');
                 card.className = 'course-card'; 
                 card.dataset.courseId = course.id;
+                const splitBadge = course.isSplitView && course.isLinked ? `<span style="font-size: 0.7rem; color: var(--accent-primary); font-weight: 600;"><i class="fas fa-folder-tree"></i> Split by Folders</span>` : '';
                  card.innerHTML = `
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                          <i class="fas fa-file-upload"></i>
@@ -1318,6 +1383,7 @@
                     <div class="course-info">
                         <h3>${course.title}</h3>
                         <p class="course-meta">${course.videoCount || 0} videos</p>
+                        ${splitBadge}
                     </div>
                     <div class="upload-card-actions">
                          <button class="primary-btn upload-notes-btn" data-id="${course.id}"><i class="fas fa-file-alt"></i> Upload Lecture Files</button>
@@ -1326,8 +1392,116 @@
                 grid.appendChild(card);
             });
         }
+
+        async function renderUploadSubfolderView(courseId, basePath = '') {
+            const course = courses.find(c => c.id === parseInt(courseId));
+            if (!course || !course.handle) return;
+
+            if (await course.handle.queryPermission({ mode: 'read' }) !== 'granted') {
+                if (await course.handle.requestPermission({ mode: 'read' }) !== 'granted') {
+                    showToast('Permission denied.', true);
+                    return;
+                }
+            }
+
+            if (!course.lectures) {
+                try { await refreshCourse(course.id, null); } catch (e) {
+                    showToast("Failed to scan course", true); return;
+                }
+            }
+
+            course.subCourseData = course.subCourseData || {};
+
+            document.getElementById('upload-course-grid').classList.add('hidden');
+            document.getElementById('upload-detail-view').classList.add('hidden');
+            const subfolderView = document.getElementById('upload-subfolder-view');
+            subfolderView.classList.remove('hidden');
+            subfolderView.dataset.courseId = courseId;
+            subfolderView.dataset.currentPath = basePath;
+
+            const titleDisplay = basePath === '' ? course.title : basePath.split('/').pop();
+            document.getElementById('upload-subfolder-title').textContent = titleDisplay + " (Upload Folders)";
+
+            // Update back link behavior
+            const backLink = document.getElementById('back-to-upload-from-subfolder');
+            if (basePath === '') {
+                backLink.textContent = '\u2190 Back to Upload';
+            } else {
+                backLink.textContent = '\u2190 Back to ' + (getParentPath(basePath) === '' ? course.title : getParentPath(basePath).split('/').pop());
+            }
+
+            const relevantChapters = course.chapters.filter(ch => basePath === '' || ch.name.startsWith(basePath + '/') || ch.name === basePath);
+            const immediateSubfoldersSet = new Set();
+            relevantChapters.forEach(ch => {
+                if (ch.name === basePath) return;
+                let relativePath = basePath === '' ? ch.name : ch.name.substring(basePath.length + 1);
+                let firstLevelFolder = relativePath.split('/')[0];
+                let fullPath = basePath === '' ? firstLevelFolder : `${basePath}/${firstLevelFolder}`;
+                immediateSubfoldersSet.add(fullPath);
+            });
+
+            let immediateSubfolders = Array.from(immediateSubfoldersSet).sort(naturalSortByNameOnly);
+
+            const grid = document.getElementById('upload-subfolder-grid');
+            grid.innerHTML = '';
+
+            if (immediateSubfolders.length === 0) {
+                // No deeper subfolders - go directly to lecture upload detail
+                subfolderView.classList.add('hidden');
+                await renderLectureUploadDetail(parseInt(courseId), basePath);
+                return;
+            }
+
+            immediateSubfolders.forEach(fullPath => {
+                const subData = course.subCourseData[fullPath] || {};
+                if (subData.hidden) return;
+
+                const folderNameOnly = fullPath.split('/').pop();
+                const faculty = subData.facultyName || course.facultyName || 'N/A Faculty';
+                const thumb = subData.thumbnail || null;
+                const subLectures = course.lectures.filter(l => l.chapter === fullPath || l.chapter.startsWith(fullPath + '/'));
+                const total = subLectures.length;
+
+                // Check if this folder has deeper split subfolders
+                const hasDeeper = course.chapters.some(ch => ch.name.startsWith(fullPath + '/') && ch.name.length > fullPath.length + 1);
+                const isSplitDeeper = subData.isSplitView && hasDeeper;
+
+                // Count how many lectures have notes/assignments
+                let notesCount = 0;
+                let assignCount = 0;
+                subLectures.forEach(lecture => {
+                    const progress = getLectureProgress(course.id, lecture.id);
+                    if (progress.pdfHandle) notesCount++;
+                    if (progress.assignmentHandle) assignCount++;
+                });
+
+                const card = document.createElement('div');
+                card.className = 'course-card';
+                card.innerHTML = `
+                    <div class="thumbnail-placeholder ${thumb ? 'has-thumbnail' : ''}" style="${thumb ? `background-image: url('${thumb}')` : ''}">
+                        <i class="fas fa-folder-open"></i>
+                    </div>
+                    <div class="course-info">
+                        <div>
+                            <h3 title="${folderNameOnly}">${folderNameOnly}</h3>
+                            <div class="course-extra-info">
+                                <div class="course-faculty" style="pointer-events:none;">${faculty}</div>
+                            </div>
+                            <p class="course-meta">${total} videos</p>
+                            <div style="display: flex; gap: 12px; font-size: 0.75rem; color: var(--text-secondary);">
+                                ${notesCount > 0 ? `<span><i class="fas fa-file-pdf" style="color: var(--accent-primary);"></i> ${notesCount} notes</span>` : ''}
+                                ${assignCount > 0 ? `<span><i class="fas fa-file-alt" style="color: var(--accent-primary);"></i> ${assignCount} assignments</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="upload-card-actions">
+                         <button class="primary-btn upload-subfolder-enter-btn" data-id="${course.id}" data-subfolder="${fullPath}" data-split="${isSplitDeeper}"><i class="fas fa-file-alt"></i> Upload Lecture Files</button>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
         
-        async function renderLectureUploadDetail(courseId) {
+        async function renderLectureUploadDetail(courseId, subfolder = null) {
             const course = courses.find(c => c.id === courseId);
             if (!course) {
                 showToast("Could not find course data.", true);
@@ -1343,16 +1517,33 @@
             }
 
             document.getElementById('upload-course-grid').classList.add('hidden');
+            document.getElementById('upload-subfolder-view').classList.add('hidden');
             const detailView = document.getElementById('upload-detail-view');
             detailView.classList.remove('hidden');
             detailView.dataset.courseId = courseId;
+            detailView.dataset.uploadSubfolder = subfolder || '';
 
-            document.getElementById('upload-course-title').textContent = course.title;
+            // Set title and back link
+            const backLink = document.getElementById('back-to-upload-grid');
+            if (subfolder) {
+                const folderName = subfolder.split('/').pop();
+                document.getElementById('upload-course-title').textContent = `${course.title} \u00BB ${folderName}`;
+                backLink.textContent = '\u2190 Back to Folders';
+            } else {
+                document.getElementById('upload-course-title').textContent = course.title;
+                backLink.textContent = '\u2190 Back to Courses';
+            }
+
             const list = document.getElementById('upload-lecture-list');
             list.innerHTML = '';
             
             let lectures = [];
-            course.chapters.forEach(ch => lectures.push(...ch.lectures));
+            if (subfolder) {
+                // Only show lectures from this subfolder
+                course.chapters.filter(ch => ch.name === subfolder || ch.name.startsWith(subfolder + '/')).forEach(ch => lectures.push(...ch.lectures));
+            } else {
+                course.chapters.forEach(ch => lectures.push(...ch.lectures));
+            }
 
             lectures.forEach(lecture => {
                 const progress = getLectureProgress(course.id, lecture.id);
@@ -1482,8 +1673,22 @@
             updateMenuProgress(subfolder);
             renderChapterList(chaptersToDisplay, lectureIdToPlay);
 
-            const liToPlay = chapterListDiv.querySelector(`li[data-lecture-id="${lectureIdToPlay}"]`) || chapterListDiv.querySelector('li');
-            if (liToPlay) await playVideo(liToPlay, startTime);
+            // Resume logic: try explicit lecture, then last played, then first lecture
+            let liToPlay = null;
+            let resumeTime = startTime;
+            if (lectureIdToPlay) {
+                liToPlay = chapterListDiv.querySelector(`li[data-lecture-id="${lectureIdToPlay}"]`);
+            }
+            if (!liToPlay && currentCourse.lastPlayedLecture) {
+                liToPlay = chapterListDiv.querySelector(`li[data-lecture-id="${currentCourse.lastPlayedLecture.lectureId}"]`);
+                if (liToPlay && resumeTime === null) {
+                    resumeTime = currentCourse.lastPlayedLecture.currentTime || null;
+                }
+            }
+            if (!liToPlay) {
+                liToPlay = chapterListDiv.querySelector('li');
+            }
+            if (liToPlay) await playVideo(liToPlay, resumeTime);
         }
         
         function renderChapterList(chaptersToDisplay, lectureIdToPlay = null) {
@@ -1546,7 +1751,113 @@
              });
         }
 
+        // --- Autoplay Next Episode ---
+        let autoplayTimer = null;
+        let autoplayCountdown = 5;
+        let pendingAutoplayLi = null;
+
+        function getNextLectureLi(currentLi) {
+            let next = currentLi.nextElementSibling;
+            if (next && next.tagName === 'LI') return next;
+            // Try first lecture in next chapter
+            let chapter = currentLi.closest('.chapter');
+            if (!chapter) return null;
+            let nextChapter = chapter.nextElementSibling;
+            while (nextChapter) {
+                if (nextChapter.classList.contains('chapter')) {
+                    const firstLi = nextChapter.querySelector('li');
+                    if (firstLi) return firstLi;
+                }
+                nextChapter = nextChapter.nextElementSibling;
+            }
+            return null;
+        }
+
+        function getPreviousLectureLi(currentLi) {
+            let prev = currentLi.previousElementSibling;
+            if (prev && prev.tagName === 'LI') return prev;
+            // Try last lecture in previous chapter
+            let chapter = currentLi.closest('.chapter');
+            if (!chapter) return null;
+            let prevChapter = chapter.previousElementSibling;
+            while (prevChapter) {
+                if (prevChapter.classList.contains('chapter')) {
+                    const allLi = prevChapter.querySelectorAll('li');
+                    if (allLi.length > 0) return allLi[allLi.length - 1];
+                }
+                prevChapter = prevChapter.previousElementSibling;
+            }
+            return null;
+        }
+
+        function showAutoplayOverlay(nextLi) {
+            pendingAutoplayLi = nextLi;
+            const overlay = document.getElementById('autoplay-overlay');
+            const nextTitleEl = nextLi.querySelector('.lecture-title');
+            const nextTitle = nextTitleEl ? nextTitleEl.textContent : 'Next Lecture';
+            document.getElementById('autoplay-next-title').textContent = nextTitle;
+            overlay.classList.add('visible');
+
+            autoplayCountdown = 5;
+            document.getElementById('autoplay-countdown-text').textContent = autoplayCountdown;
+
+            const circle = document.getElementById('autoplay-countdown-circle');
+            const circumference = 2 * Math.PI * 15.5; // r=15.5
+            circle.style.strokeDasharray = circumference;
+            circle.style.strokeDashoffset = '0';
+            circle.style.transition = 'none';
+
+            // Trigger reflow then animate
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    circle.style.transition = `stroke-dashoffset 5s linear`;
+                    circle.style.strokeDashoffset = circumference;
+                });
+            });
+
+            autoplayTimer = setInterval(() => {
+                autoplayCountdown--;
+                document.getElementById('autoplay-countdown-text').textContent = Math.max(0, autoplayCountdown);
+                if (autoplayCountdown <= 0) {
+                    hideAutoplayOverlay();
+                    if (pendingAutoplayLi) playVideo(pendingAutoplayLi);
+                    pendingAutoplayLi = null;
+                }
+            }, 1000);
+        }
+
+        function hideAutoplayOverlay() {
+            document.getElementById('autoplay-overlay').classList.remove('visible');
+            if (autoplayTimer) {
+                clearInterval(autoplayTimer);
+                autoplayTimer = null;
+            }
+            pendingAutoplayLi = null;
+        }
+
+        // Autoplay overlay button listeners
+        document.getElementById('autoplay-play-btn').addEventListener('click', () => {
+            const nextLi = pendingAutoplayLi;
+            hideAutoplayOverlay();
+            if (nextLi) playVideo(nextLi);
+        });
+        document.getElementById('autoplay-cancel-btn').addEventListener('click', () => {
+            hideAutoplayOverlay();
+        });
+
+        async function saveLastPlayedLecture() {
+            if (currentCourse && currentLectureLi) {
+                currentCourse.lastPlayedLecture = {
+                    lectureId: currentLectureLi.dataset.lectureId,
+                    currentTime: videoPlayer.currentTime || 0
+                };
+                await new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
+            }
+        }
+
         async function playVideo(liElement, startTime = null) {
+            hideAutoplayOverlay(); // Clear any pending autoplay
+
             if (currentLectureLi) { // Save last played info before switching
                 const lastLectureId = currentLectureLi.dataset.lectureId;
                 if (lastLectureId !== liElement.dataset.lectureId) {
@@ -1560,6 +1871,10 @@
             const lectureId = liElement.dataset.lectureId;
             const lecture = currentCourse.lectures.find(l => l.id === lectureId);
             if (!lecture) return;
+
+            // Save current lecture as last played immediately
+            currentCourse.lastPlayedLecture = { lectureId: lectureId, currentTime: startTime || 0 };
+            new Promise(resolve => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = resolve);
 
             updateMediaViewerToggleButton();
 
@@ -1578,16 +1893,31 @@
                     }
                     if(timeToSet) videoPlayer.currentTime = timeToSet;
                     
+                    // Apply saved playback speed
+                    videoPlayer.playbackRate = speeds[currentSpeedIndex];
+                    speedBtn.textContent = `${speeds[currentSpeedIndex]}x`;
+
                     unmuteBtn.classList.add('hidden');
-                    videoPlayer.muted = !userInteracted;
+                    videoPlayer.muted = false;
 
                     try {
+                        // Try playing with sound first (works when user clicked/pressed key)
                         await videoPlayer.play();
                     } catch (err) {
-                        console.warn("Autoplay was prevented:", err.message);
+                        console.warn("Unmuted autoplay blocked, trying muted:", err.message);
+                        // Browser blocked unmuted play — start muted and auto-unmute after 1s
                         videoPlayer.muted = true;
-                        unmuteBtn.classList.remove('hidden');
-                        await videoPlayer.play();
+                        try {
+                            await videoPlayer.play();
+                            // Playing muted succeeded — unmute after 1 second
+                            setTimeout(() => {
+                                videoPlayer.muted = false;
+                            }, 1000);
+                        } catch (err2) {
+                            // Even muted autoplay failed — show unmute button
+                            console.warn("Even muted autoplay failed:", err2.message);
+                            unmuteBtn.classList.remove('hidden');
+                        }
                     }
                 }, { once: true });
 
@@ -1605,8 +1935,14 @@
                     });
                     updateMenuProgress(currentSubfolder);
                     updateTotalTimeLeftDisplay();
-                    liElement.querySelector('.lecture-checkbox').classList.add('completed');
-                    liElement.querySelector('.lecture-title').classList.add('completed');
+                    currentLectureLi.querySelector('.lecture-checkbox').classList.add('completed');
+                    currentLectureLi.querySelector('.lecture-title').classList.add('completed');
+
+                    // Autoplay next lecture
+                    const nextLi = getNextLectureLi(currentLectureLi);
+                    if (nextLi) {
+                        showAutoplayOverlay(nextLi);
+                    }
                 };
             } catch (error) {
                 console.error("Failed to load video:", error);
@@ -1976,9 +2312,26 @@
             const uploadNotesBtn = e.target.closest('.upload-notes-btn');
             if (uploadNotesBtn) {
                 const courseId = parseInt(uploadNotesBtn.dataset.id);
-                document.getElementById('upload-course-grid').classList.add('hidden');
-                document.getElementById('upload-detail-view').classList.remove('hidden');
-                await renderLectureUploadDetail(courseId);
+                const course = courses.find(c => c.id === courseId);
+                if (course && course.isSplitView && course.isLinked) {
+                    await renderUploadSubfolderView(courseId, '');
+                } else {
+                    document.getElementById('upload-course-grid').classList.add('hidden');
+                    document.getElementById('upload-detail-view').classList.remove('hidden');
+                    await renderLectureUploadDetail(courseId);
+                }
+            }
+
+            const uploadSubfolderEnterBtn = e.target.closest('.upload-subfolder-enter-btn');
+            if (uploadSubfolderEnterBtn) {
+                const courseId = parseInt(uploadSubfolderEnterBtn.dataset.id);
+                const subfolder = uploadSubfolderEnterBtn.dataset.subfolder;
+                const isSplitDeeper = uploadSubfolderEnterBtn.dataset.split === 'true';
+                if (isSplitDeeper) {
+                    await renderUploadSubfolderView(courseId, subfolder);
+                } else {
+                    await renderLectureUploadDetail(courseId, subfolder);
+                }
             }
 
             const uploadDppBtn = e.target.closest('.upload-dpp-btn');
@@ -2292,7 +2645,10 @@
             e.target.value = null;
         });
         
-        backToLibraryBtn.addEventListener('click', () => {
+        backToLibraryBtn.addEventListener('click', async () => {
+            hideAutoplayOverlay();
+            // Save last played lecture before leaving
+            await saveLastPlayedLecture();
             videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
             hideMediaViewer();
             const targetView = backToLibraryBtn.dataset.view || 'dashboard-view';
@@ -2357,6 +2713,9 @@
                 const lectureId = currentLectureLi.dataset.lectureId;
                 const currentTime = videoPlayer.currentTime;
                 saveLectureProgress({ courseId: currentCourse.id, lectureId: lectureId, currentTime: currentTime });
+                // Also persist last played lecture to the course for cross-session resume
+                currentCourse.lastPlayedLecture = { lectureId, currentTime };
+                new Promise(r => getStore(STORE_NAME, 'readwrite').put(currentCourse).onsuccess = r);
                 const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden'), subfolder: currentSubfolder };
                 sessionStorage.setItem('courseflixState', JSON.stringify(state));
             }
@@ -2366,6 +2725,9 @@
             if (document.querySelector('.view.active')?.id === 'player-view' && currentCourse && currentLectureLi) {
                 const lectureId = currentLectureLi.dataset.lectureId;
                 const currentTime = videoPlayer.currentTime;
+                // Save last played lecture synchronously via the existing course object
+                currentCourse.lastPlayedLecture = { lectureId, currentTime };
+                try { getStore(STORE_NAME, 'readwrite').put(currentCourse); } catch(e) {}
                 const state = { view: 'player-view', courseId: currentCourse.id, lectureId, currentTime, lastView, sidebarCollapsed: lectureMenu.classList.contains('hidden'), subfolder: currentSubfolder };
                 sessionStorage.setItem('courseflixState', JSON.stringify(state));
             }
@@ -2850,7 +3212,9 @@
         timeline.addEventListener('input', (e) => videoPlayer.currentTime = e.target.value);
         fullscreenBtn.addEventListener('click', () => { if (!document.fullscreenElement) playerView.requestFullscreen().catch(err => showToast(`Error: ${err.message}`, true)); else document.exitFullscreen(); });
         
-        const speeds = [1, 1.25, 1.5, 1.75, 2, 2.25, 2.5, 0.75]; let currentSpeedIndex = 0;
+        const speeds = [1, 1.25, 1.5, 1.6, 1.75, 1.85, 2, 2.25, 2.5, 3]; let currentSpeedIndex = 3; // Default 1.6x
+        videoPlayer.playbackRate = speeds[currentSpeedIndex];
+        speedBtn.textContent = `${speeds[currentSpeedIndex]}x`;
         speedBtn.addEventListener('click', () => {
             currentSpeedIndex = (currentSpeedIndex + 1) % speeds.length;
             videoPlayer.playbackRate = speeds[currentSpeedIndex];
@@ -2885,6 +3249,20 @@
             switch(e.key) { 
                 case ' ': if (view.id === 'player-view') playPauseBtn.click(); break;
                 case 's': if (view.id === 'player-view' && currentCourse && currentLectureLi) captureDoubt(); break;
+                case 'n': 
+                    if (view.id === 'player-view' && currentLectureLi) {
+                        const nextLi = getNextLectureLi(currentLectureLi);
+                        if (nextLi) playVideo(nextLi);
+                        else showToast('No next lecture available.');
+                    }
+                    break;
+                case 'p': 
+                    if (view.id === 'player-view' && currentLectureLi) {
+                        const prevLi = getPreviousLectureLi(currentLectureLi);
+                        if (prevLi) playVideo(prevLi);
+                        else showToast('No previous lecture available.');
+                    }
+                    break;
                 case 'ArrowRight': if (view.id === 'player-view') videoPlayer.currentTime += 5; break;
                 case 'ArrowLeft': if (view.id === 'player-view') videoPlayer.currentTime -= 5; break; 
                 case 'ArrowUp': if (view.id === 'player-view') videoPlayer.volume = Math.min(1, videoPlayer.volume + 0.1); break;
@@ -3191,7 +3569,31 @@
 
         // --- DPP & Upload Listeners ---
         document.getElementById('back-to-upload-from-dpp').addEventListener('click', () => switchView('upload-view'));
-        document.getElementById('back-to-upload-grid').addEventListener('click', () => switchView('upload-view'));
+        document.getElementById('back-to-upload-grid').addEventListener('click', () => {
+            const detailView = document.getElementById('upload-detail-view');
+            const subfolder = detailView.dataset.uploadSubfolder;
+            if (subfolder) {
+                // Go back to the subfolder view
+                const courseId = parseInt(detailView.dataset.courseId);
+                const parentPath = getParentPath(subfolder);
+                detailView.classList.add('hidden');
+                renderUploadSubfolderView(courseId, parentPath);
+            } else {
+                switchView('upload-view');
+            }
+        });
+        document.getElementById('back-to-upload-from-subfolder').addEventListener('click', () => {
+            const subfolderView = document.getElementById('upload-subfolder-view');
+            const currentPath = subfolderView.dataset.currentPath || '';
+            if (currentPath === '') {
+                subfolderView.classList.add('hidden');
+                switchView('upload-view');
+            } else {
+                const parentPath = getParentPath(currentPath);
+                const courseId = parseInt(subfolderView.dataset.courseId);
+                renderUploadSubfolderView(courseId, parentPath);
+            }
+        });
 
         
         const dppSidebarToggleBtn = document.getElementById('dpp-sidebar-toggle-btn');
