@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CourseFlix</title>
-    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -34,7 +34,8 @@
             font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent;
             background-color: var(--bg-primary); color: var(--text-primary);
             transition: background-color 0.2s, color 0.2s; margin: 0;
-            display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column; height: 125vh; width: 125vw; overflow: hidden;
+            transform: scale(0.8); transform-origin: top left;
         }
         button, a, input { font-family: inherit; -webkit-tap-highlight-color: transparent; }
 
@@ -47,10 +48,12 @@
             display: flex; align-items: center; padding: 1rem 2.5rem;
             background-color: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); 
             flex-shrink: 0; z-index: 10; gap: 1rem;
+            overflow-x: auto; scrollbar-width: none; /* Firefox */
         }
+        nav::-webkit-scrollbar { display: none; } /* Chrome/Safari */
         nav.hidden { display: none; }
-        nav h1 { margin: 0; font-size: 1.5rem; font-weight: 700; cursor: pointer; }
-        .nav-links { margin-right: auto; display: flex; gap: 1rem; }
+        nav h1 { margin: 0; font-size: 1.5rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .nav-links { margin-right: auto; display: flex; gap: 1rem; white-space: nowrap; }
         .nav-link { 
             color: var(--text-secondary); text-decoration: none; font-weight: 600; font-size: 0.95rem;
             padding: 8px 12px; border-radius: 8px; transition: background-color 0.2s, color 0.2s;
@@ -72,11 +75,11 @@
 
         /* --- GRIDS --- */
         .grid-container { overflow-y: auto; flex-grow: 1; padding: 24px; }
-        #course-grid, #subcourse-grid, #upload-course-grid, #upload-subfolder-grid, #filter-results-grid, #dpp-course-grid, #notes-course-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px;
+        #course-grid, #subcourse-grid, #upload-course-grid, #upload-subfolder-grid, #filter-results-grid, #history-continue-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; align-content: start;
         }
-        #review-grid, #practice-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+        #review-grid, #practice-grid, #dpp-course-grid, #notes-course-grid, #doubts-course-grid, #doubts-specific-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; align-content: start;
         }
 
         /* --- COURSE CARD --- */
@@ -84,7 +87,7 @@
             background-color: var(--bg-secondary); border-radius: 10px;
             box-shadow: var(--shadow); border: 1px solid var(--border-primary);
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease; 
-            display: flex; flex-direction: column; height: 350px; overflow: hidden;
+            display: flex; flex-direction: column; min-height: 350px; overflow: hidden;
         }
         html[data-theme="dark"] .course-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -2px var(--accent-primary_translucent); transform: translateY(-2px); }
         html[data-theme="light"] .course-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -379,6 +382,9 @@
         .dpp-item-btn.starred { color: var(--dpp-star); }
         .dpp-item-btn.delete-dpp-btn:hover { color: var(--accent-danger); }
         .dpp-status-btn { font-size: 0.8rem; font-weight: 600; padding: 2px 6px; border-radius: 4px; min-width: 50px; text-align: center; }
+        #notes-course-grid .course-card { position: relative; }
+        #notes-course-grid .course-card .delete-all-notes-btn { position: absolute; top: 10px; right: 10px; background: var(--accent-danger, #ff4444); color: white; border: none; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; transition-delay: 0s; z-index: 10; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        #notes-course-grid .course-card:hover .delete-all-notes-btn { opacity: 1; pointer-events: auto; transition-delay: 0s; }
         .dpp-status-btn.doubt { background-color: var(--dpp-doubt); color: white; }
         .dpp-status-btn.fail { background-color: var(--dpp-fail); color: white; }
         .dpp-status-btn.solved { background-color: var(--dpp-solved); color: white; }
@@ -408,7 +414,6 @@
         #dpp-upload-sidebar-toggle-btn.collapsed i { transform: rotate(180deg); }
 
         /* --- DOUBTS VIEW --- */
-        #doubts-course-grid, #doubts-specific-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 24px; }
         #doubts-detail-container { flex-direction: column; overflow: hidden; height: 100%; width: 100%; display: flex; }
         .doubt-card { position: relative; cursor: pointer; border-radius: 10px; overflow: hidden; border: 1px solid var(--border-primary); background-color: var(--bg-secondary); }
         html[data-theme="dark"] .doubt-card:hover { border-color: var(--accent-primary); box-shadow: 0 0 15px -2px var(--accent-primary_translucent); transform: translateY(-2px); transition: all 0.2s ease; }
@@ -474,12 +479,24 @@
             <a href="#" class="nav-link" data-view="dpp-view">DPP</a>
             <a href="#" class="nav-link" data-view="notes-view">Notes</a>
             <a href="#" class="nav-link" data-view="doubts-view">Doubts</a>
+            <a href="#" class="nav-link" data-view="continue-view">Continue</a>
+            <a href="#" class="nav-link" data-view="history-view">History</a>
         </div>
         <div id="total-time-left-display" class="info-display"></div>
         <button id="add-course-btn" class="primary-btn"><i class="fas fa-plus"></i> Add Course</button>
     </nav>
 
     <div id="dashboard-view" class="view active">
+        <div style="padding: 10px 24px; display: flex; justify-content: flex-end; align-items: center; gap: 10px; border-bottom: 1px solid var(--border-primary); background: var(--bg-primary);">
+            <label for="course-sort-select" style="font-size: 0.9rem; color: var(--text-secondary); font-weight: 600;">Sort by:</label>
+            <select id="course-sort-select" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--border-secondary); background: var(--bg-tertiary); color: var(--text-primary); font-family: inherit; font-size: 0.85rem; font-weight: 500; cursor: pointer;">
+                <option value="custom">Custom (Drag & Drop)</option>
+                <option value="completion_asc">Completion (Low to High)</option>
+                <option value="completion_desc">Completion (High to Low)</option>
+                <option value="duration_desc">Duration (High to Low)</option>
+                <option value="duration_asc">Duration (Low to High)</option>
+            </select>
+        </div>
         <main id="course-grid" class="grid-container"></main>
     </div>
 
@@ -511,6 +528,17 @@
                     <h3>Realistic Finish Date:</h3>
                     <div class="calc-big-date" id="calc-result-date">Calculating...</div>
                     <div class="calc-meta-stats" id="calc-result-stats">...</div>
+                </div>
+                
+                <div class="calc-results-panel" style="margin-top: 1rem; padding: 1rem; position: relative;">
+                    <h3 style="font-size: 1rem; margin-bottom: 8px; color: var(--text-secondary);">Today's Lecture Goal</h3>
+                    <div id="daily-goal-display" style="cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px; background: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 8px;">
+                        <input type="checkbox" id="daily-goal-checkbox" style="pointer-events: none; accent-color: var(--accent-primary); width: 18px; height: 18px; margin: 0;">
+                        <span id="daily-goal-text" style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">Goal: 0/0 lectures</span>
+                        <i class="fas fa-chevron-down" style="font-size: 0.9rem; color: var(--text-secondary);"></i>
+                    </div>
+                    <div id="daily-goal-dropdown" class="hidden" style="position: absolute; top: calc(100% - 10px); left: 0; right: 0; background-color: var(--bg-secondary); border: 1px solid var(--border-primary); border-radius: 6px; box-shadow: var(--shadow); z-index: 70; max-height: 200px; overflow-y: auto; padding: 8px; text-align: left; display: flex; flex-direction: column; gap: 4px;">
+                    </div>
                 </div>
             </div>
             
@@ -597,8 +625,11 @@
                 </div>
                 <div id="dpp-list-container"></div>
             </div>
-            <div id="dpp-content-area">
-                <iframe id="dpp-viewer-frame"></iframe>
+            <div id="dpp-content-area" style="display: flex; flex-direction: column;">
+                <div id="dpp-viewer-header" class="hidden" style="padding: 10px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); display: flex; justify-content: flex-end;">
+                    <a id="dpp-open-external" href="#" target="_blank" class="secondary-btn" style="text-decoration: none;"><i class="fas fa-external-link-alt"></i> Open PDF in Browser</a>
+                </div>
+                <iframe id="dpp-viewer-frame" src="about:blank" style="flex: 1; border: none;"></iframe>
                 <p id="dpp-no-content-message" style="text-align: center; color: var(--text-secondary); padding: 50px;">Select a DPP from the sidebar to view it.</p>
             </div>
             <button id="dpp-sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
@@ -615,8 +646,11 @@
                 </div>
                 <div id="notes-list-container"></div>
             </div>
-            <div id="notes-content-area">
-                <iframe id="notes-viewer-frame"></iframe>
+            <div id="notes-content-area" style="display: flex; flex-direction: column;">
+                <div id="notes-viewer-header" class="hidden" style="padding: 10px; background: var(--bg-secondary); border-bottom: 1px solid var(--border-primary); display: flex; justify-content: flex-end;">
+                    <a id="notes-open-external" href="#" target="_blank" class="secondary-btn" style="text-decoration: none;"><i class="fas fa-external-link-alt"></i> Open PDF in Browser</a>
+                </div>
+                <iframe id="notes-viewer-frame" src="about:blank" style="flex: 1; border: none;"></iframe>
                 <p id="notes-no-content-message" style="text-align: center; color: var(--text-secondary); padding: 50px;">Select a note from the sidebar to view it.</p>
             </div>
             <button id="notes-sidebar-toggle-btn"><i class="fas fa-chevron-left"></i></button>
@@ -661,6 +695,44 @@
                 </div>
             </div>
             <button id="doubt-save-btn" class="doubt-save-btn">Save Changes</button>
+        </div>
+    </div>
+
+    <div id="continue-view" class="view" style="overflow-y: auto;">
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <div>
+                    <h2 style="margin: 0;">Continue Studying</h2>
+                    <p style="color: var(--text-secondary); margin: 5px 0 0 0;">Courses you've accessed in the last 30 hours</p>
+                </div>
+                <button id="clear-continue-btn" class="secondary-btn"><i class="fas fa-trash"></i> Clear All</button>
+            </div>
+            <main id="history-continue-grid" class="grid-container"></main>
+        </div>
+    </div>
+
+    <div id="history-view" class="view" style="overflow-y: auto;">
+        <div style="padding: 20px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 style="margin: 0;">Watch History (Last 7 Days)</h2>
+                <button id="clear-history-btn" class="secondary-btn"><i class="fas fa-trash"></i> Clear History</button>
+            </div>
+            <div id="history-table-container" style="background: var(--bg-secondary); border-radius: 8px; overflow: hidden; border: 1px solid var(--border-secondary);">
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background: var(--bg-tertiary); border-bottom: 1px solid var(--border-secondary);">
+                            <th style="padding: 12px 16px;">Course</th>
+                            <th style="padding: 12px 16px;">Lecture</th>
+                            <th style="padding: 12px 16px;">Duration</th>
+                            <th style="padding: 12px 16px;">Time</th>
+                            <th style="padding: 12px 16px; width: 40px;"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-table-body">
+                        <!-- History rows injected here -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
@@ -729,7 +801,7 @@
                         <button id="close-viewer-btn" title="Close Viewer"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
-                <iframe id="media-viewer-frame"></iframe>
+                <iframe id="media-viewer-frame" src="about:blank"></iframe>
             </div>
             <button id="media-viewer-toggle-btn" class="hidden"><i class="fas fa-chevron-left"></i></button>
         </div>
@@ -761,11 +833,12 @@
     <script>
     document.addEventListener('DOMContentLoaded', () => {
         const DB_NAME = 'CourseFlixDB';
-        const DB_VERSION = 10; // Incremented version for doubts store
+        const DB_VERSION = 11; // Incremented version for history store
         const STORE_NAME = 'courses';
         const PROGRESS_STORE = 'progress';
         const DPP_STORE = 'dpps'; // New store for DPPs
         const DOUBTS_STORE = 'doubts';
+        const HISTORY_STORE = 'history';
         let db;
 
         // --- Database Helper ---
@@ -775,11 +848,16 @@
                 request.onerror = () => reject("Error opening IndexedDB");
                 request.onsuccess = () => { db = request.result; resolve(db); };
                 request.onupgradeneeded = (event) => { 
-                    const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORE_NAME)) db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-                    if (!db.objectStoreNames.contains(PROGRESS_STORE)) db.createObjectStore(PROGRESS_STORE, { keyPath: 'id' });
-                    if (!db.objectStoreNames.contains(DPP_STORE)) db.createObjectStore(DPP_STORE, { keyPath: 'id', autoIncrement: true });
-                    if (!db.objectStoreNames.contains(DOUBTS_STORE)) db.createObjectStore(DOUBTS_STORE, { keyPath: 'id', autoIncrement: true });
+                    const upgradeDb = event.target.result;
+                    if (!upgradeDb.objectStoreNames.contains(STORE_NAME)) upgradeDb.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    if (!upgradeDb.objectStoreNames.contains(PROGRESS_STORE)) upgradeDb.createObjectStore(PROGRESS_STORE, { keyPath: 'id' });
+                    if (!upgradeDb.objectStoreNames.contains(DPP_STORE)) upgradeDb.createObjectStore(DPP_STORE, { keyPath: 'id', autoIncrement: true });
+                    if (!upgradeDb.objectStoreNames.contains(DOUBTS_STORE)) upgradeDb.createObjectStore(DOUBTS_STORE, { keyPath: 'id', autoIncrement: true });
+                    if (!upgradeDb.objectStoreNames.contains(HISTORY_STORE)) upgradeDb.createObjectStore(HISTORY_STORE, { keyPath: 'id', autoIncrement: true });
+                };
+                request.onblocked = () => {
+                    alert("Database update blocked! Please close other tabs of CourseFlix and refresh the page.");
+                    reject("Blocked");
                 };
             });
         }
@@ -896,29 +974,141 @@
         async function saveLectureProgress(data) {
             const progressId = `${data.courseId}_${data.lectureId}`;
             const existing = courseProgress[progressId] || { courseId: data.courseId, lectureId: data.lectureId };
+            
+            // Add completedAt timestamp if moving to completed
+            if (data.completed && !existing.completed) {
+                data.completedAt = new Date().toISOString();
+            } else if (data.completed === false) {
+                data.completedAt = null;
+            }
+            
+            data.lastStudiedAt = new Date().toISOString();
+            
             const progressData = { ...existing, ...data, id: progressId };
             await new Promise(resolve => getStore(PROGRESS_STORE, 'readwrite').put(progressData).onsuccess = resolve);
             courseProgress[progressId] = progressData;
+            
+            if (data.completed !== undefined && data.completed !== existing.completed) {
+                const dh = parseFloat(localStorage.getItem('calcDailyHours')) || 7;
+                const sp = parseFloat(localStorage.getItem('calcPlaybackSpeed')) || 1.5;
+                updateDailyGoalDisplay(dh, sp);
+            }
         }
+
+        async function addHistoryEntry(courseId, lectureId, courseTitle, lectureName, duration, subfolder, thumbnail) {
+            const entry = {
+                courseId, lectureId, courseTitle, lectureName, duration, subfolder, thumbnail,
+                timestamp: new Date().toISOString()
+            };
+            return new Promise((resolve, reject) => {
+                const request = getStore(HISTORY_STORE, 'readwrite').add(entry);
+                request.onsuccess = resolve;
+                request.onerror = reject;
+            });
+        }
+        
+        async function getHistoryEntries() {
+            return new Promise((resolve, reject) => {
+                const request = getStore(HISTORY_STORE, 'readonly').getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = reject;
+            });
+        }
+
+        async function hideWatchHistoryEntry(id) {
+            return new Promise((resolve, reject) => {
+                const store = getStore(HISTORY_STORE, 'readwrite');
+                store.get(id).onsuccess = (e) => {
+                    const h = e.target.result;
+                    if (h) {
+                        if (h.isHiddenFromContinue) {
+                            store.delete(id).onsuccess = () => resolve();
+                        } else {
+                            h.isHiddenFromHistory = true;
+                            store.put(h).onsuccess = () => resolve();
+                        }
+                    } else resolve();
+                };
+            });
+        }
+        
+        async function clearWatchHistory() {
+            const history = await getHistoryEntries();
+            const store = getStore(HISTORY_STORE, 'readwrite');
+            return Promise.all(history.map(h => {
+                if (h.isHiddenFromHistory) return Promise.resolve();
+                if (h.isHiddenFromContinue) {
+                    return new Promise(r => store.delete(h.id).onsuccess = r);
+                } else {
+                    h.isHiddenFromHistory = true;
+                    return new Promise(r => store.put(h).onsuccess = r);
+                }
+            }));
+        }
+
+        async function clearContinueHistory() {
+            const history = await getHistoryEntries();
+            const store = getStore(HISTORY_STORE, 'readwrite');
+            return Promise.all(history.map(h => {
+                if (h.isHiddenFromContinue) return Promise.resolve();
+                if (h.isHiddenFromHistory) {
+                    return new Promise(r => store.delete(h.id).onsuccess = r);
+                } else {
+                    h.isHiddenFromContinue = true;
+                    return new Promise(r => store.put(h).onsuccess = r);
+                }
+            }));
+        }
+        
+        async function hideContinueHistoryByCourseSubfolder(courseId, subfolder) {
+            const history = await getHistoryEntries();
+            const toHide = history.filter(h => h.courseId === courseId && (h.subfolder || '') === subfolder);
+            const store = getStore(HISTORY_STORE, 'readwrite');
+            return Promise.all(toHide.map(h => {
+                if (h.isHiddenFromHistory) {
+                    return new Promise(r => store.delete(h.id).onsuccess = r);
+                } else {
+                    h.isHiddenFromContinue = true;
+                    return new Promise(r => store.put(h).onsuccess = r);
+                }
+            }));
+        }
+
         function getLectureProgress(courseId, lectureId) {
             return courseProgress[`${courseId}_${lectureId}`] || {};
         }
 
         function calculateCourseProgress(course) {
-            if (!course.lectures) return { completed: 0, total: course.videoCount || 0, percentage: 0, remainingDuration: course.totalDuration || 0 };
+            if (!course.lectures) return { completed: 0, total: course.videoCount || 0, percentage: 0, remainingDuration: course.totalDuration || 0, totalDuration: course.totalDuration || 0 };
             let completed = 0;
             let timeCompleted = 0;
+            let activeTotalLectures = 0;
+            let activeTotalDuration = 0;
+            
             course.lectures.forEach(lecture => {
-                const progress = getLectureProgress(course.id, lecture.id);
-                if (progress.completed) {
-                    completed++;
-                    timeCompleted += lecture.duration;
+                let isSubfolderIgnored = false;
+                if (course.isSplitView && course.subCourseData) {
+                    for (const sub of Object.keys(course.subCourseData)) {
+                         if (course.subCourseData[sub].isIgnored && (lecture.chapter === sub || lecture.chapter.startsWith(sub + '/'))) {
+                              isSubfolderIgnored = true;
+                              break;
+                         }
+                    }
+                }
+                
+                if (!isSubfolderIgnored) {
+                    activeTotalLectures++;
+                    activeTotalDuration += (lecture.duration || 0);
+                    const progress = getLectureProgress(course.id, lecture.id);
+                    if (progress.completed) {
+                        completed++;
+                        timeCompleted += (lecture.duration || 0);
+                    }
                 }
             });
-            const total = course.lectures.length;
-            const percentage = total > 0 ? (completed / total) * 100 : 0;
-            const remainingDuration = (course.totalDuration || 0) - timeCompleted;
-            return { completed, total, percentage, remainingDuration: Math.max(0, remainingDuration) };
+            const percentage = activeTotalLectures > 0 ? (completed / activeTotalLectures) * 100 : 0;
+            const remainingDuration = activeTotalDuration - timeCompleted;
+            return { completed, total: activeTotalLectures, percentage, remainingDuration: Math.max(0, remainingDuration), totalDuration: activeTotalDuration };
         }
         
         function updateTotalTimeLeftDisplay() {
@@ -963,12 +1153,83 @@
                 totalTimeDisplay.textContent = formatTotalDuration(0);
                  totalTimeDisplay.style.display = 'none';
             }
+            
+            const dh = parseFloat(localStorage.getItem('calcDailyHours')) || 7;
+            const sp = parseFloat(localStorage.getItem('calcPlaybackSpeed')) || 1.5;
+            updateDailyGoalDisplay(dh, sp);
+        }
+        
+        function updateDailyGoalDisplay(dailyHours, speed) {
+            const targetLectures = Math.ceil(dailyHours / (2 / speed)); // Using 2 hours average
+            
+            // Count lectures completed today
+            const todayStr = new Date().toLocaleDateString();
+            let completedToday = [];
+            
+            Object.values(courseProgress).forEach(prog => {
+                if (prog.completed && prog.completedAt) {
+                    const completedDate = new Date(prog.completedAt).toLocaleDateString();
+                    if (completedDate === todayStr) {
+                        completedToday.push(prog);
+                    }
+                }
+            });
+            
+            const count = completedToday.length;
+            const textEl = document.getElementById('daily-goal-text');
+            const checkboxEl = document.getElementById('daily-goal-checkbox');
+            const dropdownEl = document.getElementById('daily-goal-dropdown');
+            
+            if (textEl) textEl.textContent = `Goal: ${count}/${targetLectures} lectures`;
+            if (checkboxEl) checkboxEl.checked = count >= targetLectures;
+            
+            // Update dropdown
+            if (dropdownEl) {
+                if (count === 0) {
+                    dropdownEl.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 10px;">No lectures completed today.</div>';
+                } else {
+                    // Sort by completedAt descending (newest first)
+                    completedToday.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+                    
+                    dropdownEl.innerHTML = completedToday.map(prog => {
+                        const timeStr = new Date(prog.completedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                        return `<div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-primary); padding-bottom: 4px; margin-bottom: 4px;">
+                                    <div style="font-size: 0.8rem; flex-grow: 1; margin-right: 10px; overflow: hidden;">
+                                        <strong style="display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prog.courseTitle || 'Course'}</strong>
+                                        <span style="color: var(--text-secondary); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${prog.lectureName || 'Lecture'}</span>
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--accent-primary); white-space: nowrap;">${timeStr}</div>
+                                </div>`;
+                    }).join('');
+                }
+            }
+        }
+        
+        const dailyGoalDisplay = document.getElementById('daily-goal-display');
+        if (dailyGoalDisplay) {
+            dailyGoalDisplay.addEventListener('click', (e) => {
+                const dropdown = document.getElementById('daily-goal-dropdown');
+                dropdown.classList.toggle('hidden');
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#daily-goal-display')) {
+                    document.getElementById('daily-goal-dropdown')?.classList.add('hidden');
+                }
+            });
         }
 
         // --- View Switching & Rendering ---
-        function switchView(viewId) {
-            nav.classList.toggle('hidden', ['player-view', 'dpp-upload-view', 'filter-results-view'].includes(viewId));
+        function switchView(viewId, pushState = true) {
+            nav.classList.toggle('hidden', ['player-view', 'dpp-upload-view', 'filter-results-view', 'notes-detail-view', 'dpp-detail-view'].includes(viewId));
             
+            if (pushState && viewId !== 'subcourse-view' && viewId !== 'player-view') {
+                const newHash = '#' + viewId;
+                if (window.location.hash !== newHash) {
+                    window.history.pushState(null, '', newHash);
+                }
+            }
+
             views.forEach(view => view.classList.toggle('active', view.id === viewId));
             navLinks.forEach(link => link.classList.toggle('active', link.dataset.view === viewId));
             
@@ -985,6 +1246,8 @@
             if (viewId === 'dpp-view') renderDppCourseSelectionView();
             if (viewId === 'notes-view') renderNotesCourseSelectionView();
             if (viewId === 'doubts-view') renderDoubtsCourseSelectionView();
+            if (viewId === 'continue-view') renderContinueView();
+            if (viewId === 'history-view') renderHistoryView();
             
             if (viewId !== 'player-view') {
                 sessionStorage.removeItem('courseflixState');
@@ -1067,8 +1330,27 @@
             }
 
             updateTotalTimeLeftDisplay();
+            
+            const sortSelect = document.getElementById('course-sort-select');
+            const sortVal = localStorage.getItem('courseSortPref') || 'custom';
+            if (sortSelect && sortSelect.value !== sortVal) sortSelect.value = sortVal;
+            
+            let sortedCourses = [...courses];
+            if (sortVal !== 'custom') {
+                sortedCourses.sort((a, b) => {
+                    const progA = calculateCourseProgress(a);
+                    const progB = calculateCourseProgress(b);
+                    if (sortVal === 'completion_asc') return progA.percentage - progB.percentage;
+                    if (sortVal === 'completion_desc') return progB.percentage - progA.percentage;
+                    if (sortVal === 'duration_desc') return progB.totalDuration - progA.totalDuration;
+                    if (sortVal === 'duration_asc') return progA.totalDuration - progB.totalDuration;
+                    return 0;
+                });
+            } else {
+                sortedCourses.sort((a, b) => (a.order || 0) - (b.order || 0));
+            }
 
-            for (const course of courses) {
+            for (const course of sortedCourses) {
                 const card = document.createElement('div');
                 card.className = 'course-card';
                 
@@ -1118,7 +1400,7 @@
                             </div>
                             <p class="course-meta">${course.videoCount || 0} videos</p>
                             <div class="course-duration-wrapper">
-                                ${course.totalDuration ? `<div class="course-duration">${formatDuration(course.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : '<div></div>'}
+                                ${progress.totalDuration ? `<div class="course-duration">${formatDuration(progress.totalDuration)} total • ${formatDuration(progress.remainingDuration)} left</div>` : '<div></div>'}
                                 ${splitViewHtml}
                             </div>
                         </div>
@@ -1128,13 +1410,56 @@
                         </div>
                         <button class="enter-course-btn" data-id="${course.id}">Enter Course</button>
                     </div>`;
+                    
+                card.draggable = sortVal === 'custom';
+                if (sortVal === 'custom') {
+                    card.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', course.id);
+                        card.style.opacity = '0.5';
+                        card.classList.add('dragging');
+                    });
+                    card.addEventListener('dragend', () => {
+                        card.style.opacity = '1';
+                        card.classList.remove('dragging');
+                    });
+                    card.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        const draggingCard = document.querySelector('.course-card.dragging');
+                        if (draggingCard && draggingCard !== card) {
+                            const bounding = card.getBoundingClientRect();
+                            const offset = e.clientY - bounding.top;
+                            if (offset > bounding.height / 2) card.after(draggingCard);
+                            else card.before(draggingCard);
+                        }
+                    });
+                    card.addEventListener('drop', async (e) => {
+                        e.preventDefault();
+                        const cards = Array.from(courseGrid.querySelectorAll('.course-card'));
+                        for (let i = 0; i < cards.length; i++) {
+                            const cid = parseInt(cards[i].querySelector('.remove-course-btn').dataset.id);
+                            const c = courses.find(x => x.id === cid);
+                            if (c) {
+                                c.order = i;
+                                await new Promise(r => getStore(STORE_NAME, 'readwrite').put(c).onsuccess = r);
+                            }
+                        }
+                    });
+                }
+                
                 courseGrid.appendChild(card);
             }
         }
 
-        async function renderSubcourseView(courseId, basePath = '') {
+        async function renderSubcourseView(courseId, basePath = '', pushState = true) {
             const course = courses.find(c => c.id === parseInt(courseId));
             if (!course || !course.handle) return;
+            
+            if (pushState) {
+                const newHash = '#subcourse/' + courseId + (basePath ? '/' + encodeURIComponent(basePath) : '');
+                if (window.location.hash !== newHash) {
+                    window.history.pushState(null, '', newHash);
+                }
+            }
 
             if (await course.handle.queryPermission({ mode: 'read' }) !== 'granted') {
                 if (await course.handle.requestPermission({ mode: 'read' }) !== 'granted') {
@@ -1171,7 +1496,6 @@
             let immediateSubfolders = Array.from(immediateSubfoldersSet).sort(naturalSortByNameOnly);
 
             if (immediateSubfolders.length === 0) {
-                showToast('No subfolders found here.', true);
                 await playLectureFromAnywhere(course.id, null, 'subcourse-view', basePath);
                 return;
             }
@@ -1184,6 +1508,18 @@
             const titleDisplay = basePath === '' ? course.title : basePath.split('/').pop();
             document.getElementById('subcourse-parent-title').textContent = titleDisplay + " (Folders)";
 
+            const backLink = document.getElementById('back-to-dashboard-from-sub');
+            const resumePath = viewEl.dataset.resumePath;
+            if (viewEl.dataset.origin === 'continue-view' && basePath === (resumePath || '')) {
+                backLink.innerHTML = '&larr; Back to Continue';
+            } else {
+                if (basePath === '') {
+                    backLink.innerHTML = '&larr; Back to Dashboard';
+                } else {
+                    backLink.textContent = '\u2190 Back to ' + (getParentPath(basePath) === '' ? course.title : getParentPath(basePath).split('/').pop());
+                }
+            }
+
             immediateSubfolders.forEach(fullPath => {
                 const subData = course.subCourseData[fullPath] || {};
                 if (subData.hidden) return; // Skip hidden subcourses
@@ -1191,7 +1527,7 @@
                 const folderNameOnly = fullPath.split('/').pop();
                 const faculty = subData.facultyName || course.facultyName || 'N/A Faculty';
                 const rating = subData.rating !== undefined ? subData.rating : (course.rating || 0);
-                const thumb = subData.thumbnail || null; // Inherit parent? Optional. Currently standalone.
+                const thumb = subData.thumbnail || course.thumbnail || null;
 
                 const subLectures = course.lectures.filter(l => l.chapter === fullPath || l.chapter.startsWith(fullPath + '/'));
                 let completed = 0;
@@ -1422,7 +1758,6 @@
             const titleDisplay = basePath === '' ? course.title : basePath.split('/').pop();
             document.getElementById('upload-subfolder-title').textContent = titleDisplay + " (Upload Folders)";
 
-            // Update back link behavior
             const backLink = document.getElementById('back-to-upload-from-subfolder');
             if (basePath === '') {
                 backLink.textContent = '\u2190 Back to Upload';
@@ -1458,7 +1793,7 @@
 
                 const folderNameOnly = fullPath.split('/').pop();
                 const faculty = subData.facultyName || course.facultyName || 'N/A Faculty';
-                const thumb = subData.thumbnail || null;
+                const thumb = subData.thumbnail || course.thumbnail || null;
                 const subLectures = course.lectures.filter(l => l.chapter === fullPath || l.chapter.startsWith(fullPath + '/'));
                 const total = subLectures.length;
 
@@ -1624,32 +1959,46 @@
             switchView('player-view');
             chapterListDiv.innerHTML = '<p style="text-align:center; padding: 20px;">Loading lectures...</p>';
             
-            if (originView === 'dashboard-view') {
-                backToLibraryBtn.textContent = '← Back to Courses';
-            } else if (originView === 'subcourse-view') {
-                backToLibraryBtn.textContent = '← Back to Subfolders';
-            } else {
-                const statusName = originView.split('-')[0];
-                backToLibraryBtn.textContent = `← Back to ${statusName.charAt(0).toUpperCase() + statusName.slice(1)}`;
-            }
-            backToLibraryBtn.dataset.view = originView;
-
             if (!currentCourse.lectures || !currentCourse.chapters) {
                 try {
                     await refreshCourse(currentCourse.id, null);
                 } catch (error) {
                     console.error('Failed to load course data:', error);
-                    chapterListDiv.innerHTML = `<p id="no-content-message">Error: Could not load course content. The original folder may have been moved or deleted.</p>`;
+                    chapterListDiv.innerHTML = `<p id="no-content-message">Error: Could not load course content.</p>`;
                     return;
                 }
             }
+
+            if (!currentSubfolder && lectureIdToPlay) {
+                const targetL = currentCourse.lectures.find(l => l.id === lectureIdToPlay);
+                if (targetL) currentSubfolder = targetL.chapter;
+            }
+
+            if (originView === 'dashboard-view') {
+                backToLibraryBtn.textContent = '← Back to Courses';
+            } else if (originView === 'subcourse-view') {
+                const subViewEl = document.getElementById('subcourse-view');
+                if (subViewEl.dataset.origin === 'continue-view' && currentSubfolder === (subViewEl.dataset.resumePath || '')) {
+                    backToLibraryBtn.textContent = '← Back to Continue';
+                    originView = 'continue-view';
+                } else {
+                    backToLibraryBtn.textContent = currentSubfolder ? '← Back to Folder' : '← Back to Course';
+                }
+            } else {
+                const statusName = originView.split('-')[0];
+                backToLibraryBtn.textContent = `← Back to ${statusName.charAt(0).toUpperCase() + statusName.slice(1)}`;
+            }
+            backToLibraryBtn.dataset.view = originView;
             
             let chaptersToDisplay = currentCourse.chapters;
 
             if (subfolder) {
                 chaptersToDisplay = chaptersToDisplay.filter(ch => ch.name === subfolder || ch.name.startsWith(subfolder + '/'));
                 courseTitleMenu.textContent = `${currentCourse.title} - ${subfolder.split('/').pop()}`;
-                backToLibraryBtn.dataset.view = 'subcourse-view';
+                // Only set back view to subcourse-view if we didn't come from doubts, continue, or history (preserve those origins)
+                if (originView !== 'doubts-detail-view' && originView !== 'continue-view' && originView !== 'history-view') {
+                    backToLibraryBtn.dataset.view = 'subcourse-view';
+                }
                 backToLibraryBtn.dataset.subfolder = subfolder;
                 clearBookmarksBtn.classList.remove('hidden');
             } else if (originView === 'review-view' || originView === 'practice-view') {
@@ -1883,6 +2232,9 @@
                 if(videoPlayer.src) URL.revokeObjectURL(videoPlayer.src);
                 videoPlayer.src = URL.createObjectURL(file);
                 videoPlayer.load();
+                
+                // Track history
+                addHistoryEntry(currentCourse.id, lectureId, currentCourse.title, lecture.displayName, lecture.duration, currentSubfolder, currentCourse.thumbnail).catch(console.error);
 
                 videoPlayer.addEventListener('loadeddata', async () => {
                     renderBookmarks();
@@ -2028,10 +2380,16 @@
                 activeFileUrl = URL.createObjectURL(blobToView);
                 
                 if (fileType.toLowerCase() === 'dpp') {
+                    document.getElementById('dpp-viewer-frame').style.display = 'block';
                     document.getElementById('dpp-viewer-frame').src = activeFileUrl;
+                    document.getElementById('dpp-open-external').href = activeFileUrl;
+                    document.getElementById('dpp-viewer-header').classList.remove('hidden');
                     document.getElementById('dpp-no-content-message').classList.add('hidden');
                 } else if (fileType.toLowerCase() === 'note') {
+                    document.getElementById('notes-viewer-frame').style.display = 'block';
                     document.getElementById('notes-viewer-frame').src = activeFileUrl;
+                    document.getElementById('notes-open-external').href = activeFileUrl;
+                    document.getElementById('notes-viewer-header').classList.remove('hidden');
                     document.getElementById('notes-no-content-message').classList.add('hidden');
                 } else {
                     mediaViewerFrame.src = activeFileUrl;
@@ -2350,6 +2708,29 @@
                 renderDppCourseSelectionView();
             }
 
+            const notesCourseDeleteBtn = e.target.closest('#notes-course-grid .course-card .delete-all-notes-btn');
+            if (notesCourseDeleteBtn) {
+                e.stopPropagation();
+                const courseId = parseInt(notesCourseDeleteBtn.closest('.course-card').dataset.courseId);
+                const course = courses.find(c => c.id === courseId);
+                if (confirm(`Are you sure you want to delete all notes for ${course.title}? This action cannot be undone.`)) {
+                    let updated = false;
+                    for (const key in courseProgress) {
+                        if (courseProgress[key].courseId === courseId && courseProgress[key].pdfHandle) {
+                            delete courseProgress[key].pdfHandle;
+                            delete courseProgress[key].pdfName;
+                            saveLectureProgress(courseProgress[key]);
+                            updated = true;
+                        }
+                    }
+                    if (updated) {
+                        showToast(`All notes for ${course.title} deleted`);
+                        renderNotesCourseSelectionView();
+                    }
+                }
+                return;
+            }
+
             const notesCourseCard = e.target.closest('#notes-course-grid .course-card .enter-course-btn');
             if(notesCourseCard) {
                 const courseId = parseInt(notesCourseCard.closest('.course-card').dataset.courseId);
@@ -2363,8 +2744,17 @@
             if (backToDashboardSub) {
                 const viewEl = document.getElementById('subcourse-view');
                 const currentPath = viewEl.dataset.currentPath || '';
-                if (currentPath === '') {
+                const origin = viewEl.dataset.origin || 'dashboard-view';
+                const resumePath = viewEl.dataset.resumePath;
+                
+                if (origin === 'continue-view' && currentPath === (resumePath || '')) {
+                    renderContinueView();
+                    switchView('continue-view');
+                    viewEl.dataset.origin = 'dashboard-view';
+                    delete viewEl.dataset.resumePath;
+                } else if (currentPath === '') {
                     switchView('dashboard-view');
+                    viewEl.dataset.origin = 'dashboard-view';
                 } else {
                     const parentPath = getParentPath(currentPath);
                     const cId = parseInt(viewEl.dataset.courseId);
@@ -2377,7 +2767,7 @@
             const star = e.target.closest('.course-rating i.fa-star');
             if (star) {
                 const ratingContainer = star.parentElement;
-                const extraInfo = ratingContainer.parentElement;
+                const extraInfo = star.closest('.course-extra-info');
                 const courseId = parseInt(extraInfo.dataset.id);
                 const subfolder = extraInfo.dataset.subfolder;
                 
@@ -2653,10 +3043,16 @@
             hideMediaViewer();
             const targetView = backToLibraryBtn.dataset.view || 'dashboard-view';
             if (targetView === 'subcourse-view') {
-                const path = getParentPath(currentSubfolder);
+                const path = currentSubfolder ? getParentPath(currentSubfolder) : '';
                 renderSubcourseView(currentCourse.id, path);
             } else if (targetView.includes('review') || targetView.includes('practice')) {
                 showFilteredCoursesView(targetView.split('-')[0]);
+            } else if (targetView === 'doubts-detail-view') {
+                renderDoubtsDetailView(currentCourse.id, currentSubfolder);
+                switchView('doubts-view');
+            } else if (targetView === 'continue-view') {
+                renderContinueView();
+                switchView(targetView);
             } else {
                 switchView(targetView);
             }
@@ -2976,11 +3372,19 @@
                     serializableDpps.push(cleanDpp);
                 }
 
+                // Export Doubts, History, and localStorage
+                const allDoubts = await new Promise(r => getStore(DOUBTS_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+                const allHistory = await new Promise(r => getStore(HISTORY_STORE, 'readonly').getAll().onsuccess = e => r(e.target.result));
+                const localStoreData = { ...localStorage };
+
                 const backupData = {
                     courses: serializableCourses,
                     progress: serializableProgress,
                     dpps: serializableDpps,
-                    version: 2,
+                    doubts: allDoubts,
+                    history: allHistory,
+                    localStorage: localStoreData,
+                    version: 3,
                     exportedAt: new Date().toISOString()
                 };
 
@@ -3119,7 +3523,9 @@
                 await Promise.all([
                     new Promise(r => getStore(STORE_NAME, 'readwrite').clear().onsuccess = r),
                     new Promise(r => getStore(PROGRESS_STORE, 'readwrite').clear().onsuccess = r),
-                    new Promise(r => getStore(DPP_STORE, 'readwrite').clear().onsuccess = r)
+                    new Promise(r => getStore(DPP_STORE, 'readwrite').clear().onsuccess = r),
+                    new Promise(r => getStore(DOUBTS_STORE, 'readwrite').clear().onsuccess = r),
+                    new Promise(r => getStore(HISTORY_STORE, 'readwrite').clear().onsuccess = r)
                 ]);
 
                 for (const course of backupData.courses) {
@@ -3166,6 +3572,24 @@
                             }
                         }
                         await new Promise(r => getStore(DPP_STORE, 'readwrite').put(newDpp).onsuccess = r);
+                    }
+                }
+
+                if (backupData.doubts) {
+                    for (const doubt of backupData.doubts) {
+                        await new Promise(r => getStore(DOUBTS_STORE, 'readwrite').put(doubt).onsuccess = r);
+                    }
+                }
+                
+                if (backupData.history) {
+                    for (const hist of backupData.history) {
+                        await new Promise(r => getStore(HISTORY_STORE, 'readwrite').put(hist).onsuccess = r);
+                    }
+                }
+                
+                if (backupData.localStorage) {
+                    for (const [key, value] of Object.entries(backupData.localStorage)) {
+                        localStorage.setItem(key, value);
                     }
                 }
 
@@ -3705,6 +4129,11 @@
                     await new Promise(r => getStore(DPP_STORE, 'readwrite').delete(dppId).onsuccess = r);
                     const courseId = parseInt(document.getElementById('dpp-detail-container').dataset.courseId);
                     await renderDppDetailView(courseId);
+                    document.getElementById('dpp-viewer-frame').src = 'about:blank';
+                    document.getElementById('dpp-viewer-frame').style.display = 'block';
+                    document.getElementById('dpp-viewer-header').classList.add('hidden');
+                    document.getElementById('dpp-no-content-message').innerHTML = 'Select a DPP from the sidebar to view it.';
+                    document.getElementById('dpp-no-content-message').classList.remove('hidden');
                 }
             } else if (e.target.closest('.complete-dpp-btn')) {
                 e.stopPropagation();
@@ -3819,6 +4248,7 @@
 
 
                 card.innerHTML = `
+                    <button class="delete-all-notes-btn" title="Delete all notes for this subject"><i class="fas fa-times"></i></button>
                     <div class="thumbnail-placeholder ${course.thumbnail ? 'has-thumbnail' : ''}" style="${course.thumbnail ? `background-image: url('${course.thumbnail}')` : ''}">
                         <i class="fas fa-book-open" style="font-size: 3rem;"></i>
                     </div>
@@ -3878,8 +4308,9 @@
                                 <div class="notes-list">`;
                     
                     notesInChapter.forEach(note => {
-                        html += `<div class="notes-item" data-lecture-id="${note.lectureId}">
+                        html += `<div class="notes-item" data-lecture-id="${note.lectureId}" style="display: flex; justify-content: space-between; align-items: center;">
                                     <span class="notes-item-title">${note.lectureName || 'Unnamed Note'}</span>
+                                    <button class="delete-note-btn" data-lecture-id="${note.lectureId}" style="background: none; border: none; color: var(--accent-danger); cursor: pointer; padding: 4px;" title="Delete Note"><i class="fas fa-trash"></i></button>
                                  </div>`;
                     });
 
@@ -3896,6 +4327,27 @@
         });
 
         document.getElementById('notes-list-container').addEventListener('click', async (e) => {
+            const deleteBtn = e.target.closest('.delete-note-btn');
+            if (deleteBtn) {
+                e.stopPropagation();
+                if (!confirm('Are you sure you want to delete this note?')) return;
+                const courseId = parseInt(document.getElementById('notes-detail-container').dataset.courseId);
+                const lectureId = deleteBtn.dataset.lectureId;
+                const progress = getLectureProgress(courseId, lectureId);
+                if (progress) {
+                    delete progress.pdfHandle;
+                    delete progress.pdfName;
+                    saveLectureProgress(progress);
+                    renderNotesDetailView(courseId);
+                    showToast('Note deleted');
+                    document.getElementById('notes-viewer-frame').src = 'about:blank';
+                    document.getElementById('notes-viewer-frame').style.display = 'block';
+                    document.getElementById('notes-viewer-header').classList.add('hidden');
+                    document.getElementById('notes-no-content-message').innerHTML = 'Select a note from the sidebar to view it.';
+                    document.getElementById('notes-no-content-message').classList.remove('hidden');
+                }
+                return;
+            }
             const folderTitle = e.target.closest('.notes-folder-title');
             if (folderTitle) {
                 e.stopPropagation();
@@ -3947,6 +4399,97 @@
             } catch (err) {
                 console.error("Doubt capture failed:", err);
                 showToast("Could not capture screenshot.", true);
+            }
+        }
+
+        async function renderContinueView() {
+            const history = await getHistoryEntries();
+            const now = new Date();
+            
+            // Filter 30 hours for continue grid and exclude hidden
+            const thirtyHoursAgo = new Date(now.getTime() - (30 * 60 * 60 * 1000));
+            const recentHistory = history.filter(h => !h.isHiddenFromContinue && new Date(h.timestamp) >= thirtyHoursAgo);
+            
+            // Unique courses/subfolders from recent history
+            const uniqueCoursesMap = new Map();
+            recentHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest first
+            for (const h of recentHistory) {
+                const key = `${h.courseId}_${h.subfolder || ''}`;
+                if (!uniqueCoursesMap.has(key)) {
+                    uniqueCoursesMap.set(key, h);
+                }
+            }
+            const continueGrid = document.getElementById('history-continue-grid');
+            continueGrid.innerHTML = '';
+            
+            if (uniqueCoursesMap.size === 0) {
+                continueGrid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; color: var(--text-secondary);">No courses studied in the last 30 hours.</p>';
+            } else {
+                for (const h of uniqueCoursesMap.values()) {
+                    const course = courses.find(c => c.id === h.courseId);
+                    if (!course) continue;
+                    
+                    let cardThumbnail = course.thumbnail;
+                    if (h.subfolder && course.subCourseData && course.subCourseData[h.subfolder] && course.subCourseData[h.subfolder].thumbnail) {
+                        cardThumbnail = course.subCourseData[h.subfolder].thumbnail;
+                    }
+                    
+                    const cardTitle = h.subfolder ? h.subfolder.split('/').pop() : course.title;
+                    const cardSubtitle = h.subfolder ? `Course: ${course.title}` : `Last: ${h.lectureName}`;
+                    
+                    const card = document.createElement('div');
+                    card.className = 'course-card';
+                    card.innerHTML = `
+                        <div class="thumbnail-placeholder ${cardThumbnail ? 'has-thumbnail' : ''}" style="${cardThumbnail ? `background-image: url('${cardThumbnail}')` : ''}">
+                            <i class="fas fa-history" style="font-size: 3rem;"></i>
+                        </div>
+                        <div class="course-info" style="position: relative;">
+                            <button class="delete-continue-btn" data-course="${course.id}" data-subfolder="${h.subfolder || ''}" style="position: absolute; top: -10px; right: -10px; background: var(--bg-tertiary); border: 1px solid var(--border-secondary); color: var(--accent-danger); width: 28px; height: 28px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10;"><i class="fas fa-times"></i></button>
+                            <div>
+                                <h3 title="${cardTitle}">${cardTitle}</h3>
+                                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px;">${cardSubtitle}</p>
+                            </div>
+                            <button class="primary-btn history-continue-btn" data-course="${course.id}" data-subfolder="${h.subfolder || ''}" style="margin-top: auto;">Resume</button>
+                        </div>
+                    `;
+                    continueGrid.appendChild(card);
+                }
+            }
+        }
+
+        async function renderHistoryView() {
+            const history = await getHistoryEntries();
+            const now = new Date();
+            
+            // Filter 7 days for table and exclude hidden
+            const sevenDaysAgo = new Date(now.getTime() - (7 * 24 * 60 * 60 * 1000));
+            const weekHistory = history.filter(h => !h.isHiddenFromHistory && new Date(h.timestamp) >= sevenDaysAgo);
+            weekHistory.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Newest first
+            
+            const tableBody = document.getElementById('history-table-body');
+            tableBody.innerHTML = '';
+            if (weekHistory.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center; padding: 20px; color: var(--text-secondary);">No history found for the last 7 days.</td></tr>';
+            } else {
+                weekHistory.forEach(h => {
+                    const row = document.createElement('tr');
+                    row.style.borderBottom = '1px solid var(--border-secondary)';
+                    row.innerHTML = `
+                        <td style="padding: 12px 16px; display: flex; align-items: center; gap: 10px;">
+                            ${h.thumbnail ? `<img src="${h.thumbnail}" style="width: 40px; height: 40px; border-radius: 4px; object-fit: cover;">` : `<div style="width: 40px; height: 40px; background: var(--bg-tertiary); border-radius: 4px; display: flex; align-items: center; justify-content: center;"><i class="fas fa-video"></i></div>`}
+                            <span>${h.courseTitle}</span>
+                        </td>
+                        <td style="padding: 12px 16px;">
+                            <a href="#" class="history-play-link" data-course="${h.courseId}" data-lecture="${h.lectureId}" data-subfolder="${h.subfolder || ''}" style="color: var(--accent-primary); text-decoration: none; font-weight: 500;">${h.lectureName}</a>
+                        </td>
+                        <td style="padding: 12px 16px; color: var(--text-secondary);">${formatDuration(h.duration || 0)}</td>
+                        <td style="padding: 12px 16px; color: var(--text-secondary);">${new Date(h.timestamp).toLocaleString(undefined, { day: 'numeric', month: 'long', weekday: 'long', hour: 'numeric', minute: 'numeric' })}</td>
+                        <td style="padding: 12px 16px; text-align: right;">
+                            <button class="delete-history-btn" data-id="${h.id}" style="background: none; border: none; color: var(--accent-danger); cursor: pointer; padding: 4px;"><i class="fas fa-times"></i></button>
+                        </td>
+                    `;
+                    tableBody.appendChild(row);
+                });
             }
         }
 
@@ -4066,6 +4609,50 @@
         
         // Doubts View Event Listeners
         document.body.addEventListener('click', async (e) => {
+            if (e.target.closest('.history-continue-btn')) {
+                const btn = e.target.closest('.history-continue-btn');
+                const courseId = parseInt(btn.dataset.course);
+                const subfolder = btn.dataset.subfolder;
+                const viewEl = document.getElementById('subcourse-view');
+                viewEl.dataset.origin = 'continue-view';
+                viewEl.dataset.resumePath = subfolder || '';
+                renderSubcourseView(courseId, subfolder || '');
+            }
+            if (e.target.closest('#clear-history-btn')) {
+                if (confirm('Are you sure you want to clear your entire watch history?')) {
+                    await clearWatchHistory();
+                    if (!document.getElementById('history-view').classList.contains('hidden')) renderHistoryView();
+                    if (!document.getElementById('continue-view').classList.contains('hidden')) renderContinueView();
+                }
+            }
+            if (e.target.closest('#clear-continue-btn')) {
+                if (confirm('Are you sure you want to clear all your active study sessions?')) {
+                    await clearContinueHistory();
+                    if (!document.getElementById('history-view').classList.contains('hidden')) renderHistoryView();
+                    if (!document.getElementById('continue-view').classList.contains('hidden')) renderContinueView();
+                }
+            }
+            if (e.target.closest('.delete-history-btn')) {
+                const id = parseInt(e.target.closest('.delete-history-btn').dataset.id);
+                await hideWatchHistoryEntry(id);
+                renderHistoryView();
+                // We should also re-render continue view in background
+                renderContinueView();
+            }
+            if (e.target.closest('.delete-continue-btn')) {
+                const btn = e.target.closest('.delete-continue-btn');
+                const courseId = parseInt(btn.dataset.course);
+                const subfolder = btn.dataset.subfolder;
+                await hideContinueHistoryByCourseSubfolder(courseId, subfolder);
+                renderContinueView();
+                // Also update history view
+                renderHistoryView();
+            }
+            if (e.target.closest('.history-play-link')) {
+                e.preventDefault();
+                const link = e.target.closest('.history-play-link');
+                playLectureFromAnywhere(link.dataset.course, link.dataset.lecture, 'history-view', link.dataset.subfolder || null);
+            }
             if (e.target.closest('.enter-doubt-btn')) {
                 const btn = e.target.closest('.enter-doubt-btn');
                 renderDoubtsDetailView(parseInt(btn.dataset.c), btn.dataset.s);
@@ -4103,7 +4690,7 @@
                 const timestamp = parseFloat(el.dataset.t);
                 const subfolder = el.dataset.s;
                 switchView('player-view');
-                await renderPlayer(courseId, lectureId, 'doubts-view', timestamp, subfolder);
+                await renderPlayer(courseId, lectureId, 'doubts-detail-view', timestamp, subfolder);
             }
             if (e.target.closest('.remove-tag')) {
                 const tagToRemove = e.target.closest('.remove-tag').dataset.tag;
@@ -4176,6 +4763,12 @@
         document.getElementById('calc-daily-hours').addEventListener('input', runCompletionCalculator);
         document.getElementById('calc-playback-speed').addEventListener('input', runCompletionCalculator);
         
+        // Restore calc config
+        const savedHours = localStorage.getItem('calcDailyHours');
+        if (savedHours) document.getElementById('calc-daily-hours').value = savedHours;
+        const savedSpeed = localStorage.getItem('calcPlaybackSpeed');
+        if (savedSpeed) document.getElementById('calc-playback-speed').value = savedSpeed;
+        
         function runCompletionCalculator() {
              const displayEl = document.getElementById('total-time-left-display');
              const totalSeconds = parseFloat(displayEl.dataset.seconds || 0);
@@ -4183,6 +4776,10 @@
              
              const dailyHours = parseFloat(document.getElementById('calc-daily-hours').value) || 7;
              const speed = parseFloat(document.getElementById('calc-playback-speed').value) || 1.5;
+             
+             localStorage.setItem('calcDailyHours', dailyHours);
+             localStorage.setItem('calcPlaybackSpeed', speed);
+             updateDailyGoalDisplay(dailyHours, speed);
              
              if (totalSeconds === 0) {
                  document.getElementById('calc-result-date').innerText = "Already Finished!";
@@ -4210,7 +4807,8 @@
             await loadCoursesFromDB();
             
             const savedStateJSON = sessionStorage.getItem('courseflixState');
-            if (savedStateJSON) {
+            // Only restore the player session if there's no direct URL hash (pasting a URL should always show that view cleanly)
+            if (savedStateJSON && !window.location.hash) {
                 const savedState = JSON.parse(savedStateJSON);
                 if (savedState.view === 'player-view' && savedState.courseId && savedState.lectureId) {
                     if (savedState.sidebarCollapsed) {
@@ -4224,7 +4822,59 @@
                     }
                 }
             }
-            switchView('dashboard-view');
+            
+            const sortSelect = document.getElementById('course-sort-select');
+            if (sortSelect) {
+                sortSelect.addEventListener('change', () => {
+                    localStorage.setItem('courseSortPref', sortSelect.value);
+                    renderCourseGrid();
+                });
+            }
+            
+            function checkAndTriggerBackup() {
+                const lastBackupStr = localStorage.getItem('lastBackupDate');
+                const todayStr = new Date().toLocaleDateString();
+                
+                if (lastBackupStr !== todayStr) {
+                    const exportBtn = document.getElementById('export-btn');
+                    if (exportBtn) {
+                        exportBtn.click();
+                        localStorage.setItem('lastBackupDate', todayStr);
+                        showToast('Automated daily backup triggered.');
+                    }
+                }
+            }
+            
+            checkAndTriggerBackup();
+            setInterval(checkAndTriggerBackup, 60 * 60 * 1000); // Check every hour
+            
+            async function handleRoute() {
+                const hash = window.location.hash.substring(1);
+                if (!hash || hash === 'dashboard-view') {
+                    switchView('dashboard-view', false);
+                    return;
+                }
+                if (hash.startsWith('subcourse/')) {
+                    const parts = hash.split('/');
+                    const courseId = parseInt(parts[1]);
+                    const path = parts.slice(2).join('/');
+                    if (courseId) {
+                        await renderSubcourseView(courseId, decodeURIComponent(path), false);
+                    }
+                    return;
+                }
+                if (hash.endsWith('-view')) {
+                    switchView(hash, false);
+                    return;
+                }
+            }
+            window.addEventListener('hashchange', handleRoute);
+            
+            if (window.location.hash) {
+                await handleRoute();
+            } else {
+                switchView('dashboard-view');
+            }
         }
         main();
     });
