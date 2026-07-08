@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CourseFlix</title>
-    <link rel="icon" type="image/jpeg" href="favicon.ico">
+    <link rel="icon" type="image/jpeg" href="favicon.jpg">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -3039,6 +3039,7 @@
             hideAutoplayOverlay();
             // Save last played lecture before leaving
             await saveLastPlayedLecture();
+            sessionStorage.removeItem('courseflixState');
             videoPlayer.pause(); videoPlayer.src = ""; videoPlayer.load();
             hideMediaViewer();
             const targetView = backToLibraryBtn.dataset.view || 'dashboard-view';
@@ -4806,9 +4807,10 @@
             await loadAllProgress();
             await loadCoursesFromDB();
             
+            let sessionRestored = false;
             const savedStateJSON = sessionStorage.getItem('courseflixState');
-            // Only restore the player session if there's no direct URL hash (pasting a URL should always show that view cleanly)
-            if (savedStateJSON && !window.location.hash) {
+            // Always try to restore the player session so a refresh doesn't lose context
+            if (savedStateJSON) {
                 const savedState = JSON.parse(savedStateJSON);
                 if (savedState.view === 'player-view' && savedState.courseId && savedState.lectureId) {
                     if (savedState.sidebarCollapsed) {
@@ -4818,7 +4820,7 @@
                     const courseExists = courses.some(c => c.id === savedState.courseId);
                     if (courseExists) {
                       await renderPlayer(savedState.courseId, savedState.lectureId, savedState.lastView, savedState.currentTime, savedState.subfolder);
-                      return;
+                      sessionRestored = true;
                     }
                 }
             }
@@ -4870,9 +4872,9 @@
             }
             window.addEventListener('hashchange', handleRoute);
             
-            if (window.location.hash) {
+            if (window.location.hash && !sessionRestored) {
                 await handleRoute();
-            } else {
+            } else if (!sessionRestored) {
                 switchView('dashboard-view');
             }
         }
